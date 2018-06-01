@@ -4,34 +4,27 @@ import org.joda.time.LocalDate;
 
 import pt.ulisboa.tecnico.softeng.activity.exception.ActivityException;
 
-public class Booking {
+public class Booking extends Booking_Base {
 	private static int counter = 0;
 
-	private static final String type = "SPORT";
-	private final ActivityProvider activityProvider;
-	private final String reference;
-	private final String providerNif;
-	private final String nif;
-	private final String iban;
-	private final double amount;
-	private final LocalDate date;
-	private String paymentReference;
-	private String invoiceReference;
-	private String cancel;
-	private LocalDate cancellationDate;
+	private static final String SPORT_TYPE = "SPORT";
+	
+
 	private boolean cancelledInvoice = false;
 	private String cancelledPaymentReference = null;
 
 	public Booking(ActivityProvider provider, ActivityOffer offer, String buyerNif, String buyerIban) {
 		checkArguments(provider, offer, buyerNif, buyerIban);
 
-		this.reference = provider.getCode() + Integer.toString(++Booking.counter);
-		this.activityProvider = provider;
-		this.providerNif = provider.getNif();
-		this.nif = buyerNif;
-		this.iban = buyerIban;
-		this.amount = offer.getAmount();
-		this.date = offer.getBegin();
+		setReference(offer.getActivity().getActivityProvider().getCode() + Integer.toString(++Booking.counter));
+
+		setActivityOffer(offer);
+
+		setProviderNif(provider.getNif());
+		setNif(buyerNif);
+		setIban(buyerIban);
+		setAmount(offer.getAmount());
+		setDate(offer.getBegin());
 
 		offer.addBooking(this);
 	}
@@ -41,59 +34,23 @@ public class Booking {
 				|| buyerIban.trim().length() == 0) {
 			throw new ActivityException();
 		}
+
+		if (offer.getCapacity() == offer.getNumberActiveOfBookings()) {
+			throw new ActivityException();
+		}
 	}
 
-	public String getReference() {
-		return this.reference;
+	public void delete() {
+		setActivityOffer(null);
+
+		deleteDomainObject();
 	}
 
 	public String getType() {
-		return this.type;
+		return SPORT_TYPE;
 	}
 
-	public String getProviderNif() {
-		return this.providerNif;
-	}
 
-	public String getNif() {
-		return this.nif;
-	}
-
-	public String getIban() {
-		return this.iban;
-	}
-
-	public double getAmount() {
-		return this.amount;
-	}
-
-	public LocalDate getDate() {
-		return this.date;
-	}
-
-	public String getPaymentReference() {
-		return this.paymentReference;
-	}
-
-	public void setPaymentReference(String paymentReference) {
-		this.paymentReference = paymentReference;
-	}
-
-	public String getInvoiceReference() {
-		return this.invoiceReference;
-	}
-
-	public void setInvoiceReference(String invoiceReference) {
-		this.invoiceReference = invoiceReference;
-	}
-
-	public String getCancellation() {
-		return this.cancel;
-	}
-
-	public LocalDate getCancellationDate() {
-		return this.cancellationDate;
-	}
 
 	public boolean isCancelledInvoice() {
 		return this.cancelledInvoice;
@@ -112,16 +69,16 @@ public class Booking {
 	}
 
 	public String cancel() {
-		this.cancel = "CANCEL" + this.reference;
-		this.cancellationDate = new LocalDate();
+		setCancel("CANCEL" + getReference());
+		setCancellationDate(new LocalDate());
 
-		this.activityProvider.getProcessor().submitBooking(this);
+		getActivityOffer().getActivity().getActivityProvider().getProcessor().submitBooking(this);
 
-		return this.cancel;
+		return getCancel();
 	}
 
 	public boolean isCancelled() {
-		return this.cancel != null;
+		return getCancel() != null;
 	}
 
 }

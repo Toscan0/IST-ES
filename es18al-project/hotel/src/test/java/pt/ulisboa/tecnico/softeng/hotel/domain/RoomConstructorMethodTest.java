@@ -2,22 +2,18 @@ package pt.ulisboa.tecnico.softeng.hotel.domain;
 
 import static org.junit.Assert.fail;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import pt.ulisboa.tecnico.softeng.hotel.domain.Room.Type;
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
-public class RoomConstructorMethodTest {
+public class RoomConstructorMethodTest extends RollbackTestAbstractClass {
 	private Hotel hotel;
-	private final double price1 = 124.5;
-	private final double price2 = 224.5;
 
-	@Before
-	public void setUp() {
-		this.hotel = new Hotel("XPTO123", "Lisboa", "NIF", "IBAN", price1, price2);
+	@Override
+	public void populate4Test() {
+		this.hotel = new Hotel("XPTO123", "Lisboa", "NIF", "IBAN", 20.0, 30.0);
 	}
 
 	@Test
@@ -27,7 +23,7 @@ public class RoomConstructorMethodTest {
 		Assert.assertEquals(this.hotel, room.getHotel());
 		Assert.assertEquals("01", room.getNumber());
 		Assert.assertEquals(Type.DOUBLE, room.getType());
-		Assert.assertEquals(1, this.hotel.getNumberOfRooms());
+		Assert.assertEquals(1, this.hotel.getRoomSet().size());
 	}
 
 	@Test(expected = HotelException.class)
@@ -54,7 +50,6 @@ public class RoomConstructorMethodTest {
 	public void nonAlphanumericRoomNumber() {
 		new Room(this.hotel, "JOSE", Type.DOUBLE);
 	}
-	
 
 	@Test
 	public void nonUniqueRoomNumber() {
@@ -63,18 +58,13 @@ public class RoomConstructorMethodTest {
 			new Room(this.hotel, "01", Type.DOUBLE);
 			fail();
 		} catch (HotelException he) {
-			Assert.assertEquals(1, this.hotel.getNumberOfRooms());
+			Assert.assertEquals(1, this.hotel.getRoomSet().size());
 		}
 	}
 
 	@Test(expected = HotelException.class)
 	public void nullType() {
 		new Room(this.hotel, "01", null);
-	}
-
-	@After
-	public void tearDown() {
-		Hotel.hotels.clear();
 	}
 
 }

@@ -9,4 +9,3 @@ public class RemoteAccessException extends RuntimeException {
 		super(message);
 	}
 }
-

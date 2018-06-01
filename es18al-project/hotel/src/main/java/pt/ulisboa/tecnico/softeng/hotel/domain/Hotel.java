@@ -1,44 +1,62 @@
 package pt.ulisboa.tecnico.softeng.hotel.domain;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.joda.time.LocalDate;
 
+import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.hotel.dataobjects.RoomBookingData;
-import pt.ulisboa.tecnico.softeng.hotel.domain.Room.Type;
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
-public class Hotel {
-	public static Set<Hotel> hotels = new HashSet<>();
-
+public class Hotel extends Hotel_Base {
 	static final int CODE_SIZE = 7;
 
-	private final String code;
-	private final String name;
-	private final String nif;
+	/*private final String nif;
 	private final String iban;
-	private final double singlePrice;
-	private final double doublePrice;
-	private final Set<Room> rooms = new HashSet<>();
-	
+	private double priceSingle;
+	private double priceDouble;
+*/
 	private final Processor processor = new Processor();
 
-	public Hotel(String code, String name, String nif, String iban, double singlePrice, double doublePrice) {
-		checkArguments(code, name, nif, iban, singlePrice, doublePrice);
-
-		this.code = code;
-		this.name = name;
-		this.nif = nif;
-		this.iban = iban;
-		this.singlePrice = singlePrice;
-		this.doublePrice = doublePrice;
-		Hotel.hotels.add(this);
+	@Override
+	public int getCounter() {
+		int counter = super.getCounter() + 1;
+		setCounter(counter);
+		return counter;
 	}
 
-	private void checkArguments(String code, String name, String nif, String iban, double price1, double price2) {
-		if (code == null || name == null || code.trim().length() == 0 || name.trim().length() == 0 || nif == null
-				|| nif.trim().length() == 0 || iban == null || iban.trim().length() == 0 || price1 <= 0 || price2 <= 0) {
+	public Hotel(String code, String name, String nif, String iban, double priceSingle, double priceDouble) {
+		checkArguments(code, name, nif, iban, priceSingle, priceDouble);
+
+		setCode(code);
+		setName(name);
+
+		setNif(nif);
+		setIban(iban);
+		setPriceSingle(priceSingle);
+		setPriceDouble(priceDouble);
+
+		FenixFramework.getDomainRoot().addHotel(this);
+	}
+
+	public void delete() {
+		setRoot(null);
+
+		for (Room room : getRoomSet()) {
+			room.delete();
+		}
+
+		deleteDomainObject();
+	}
+
+	private void checkArguments(String code, String name, String nif, String iban, double priceSingle,
+			double priceDouble) {
+		if (code == null || name == null || isEmpty(code) || isEmpty(name) || nif == null || isEmpty(nif)
+				|| iban == null || isEmpty(iban) || priceSingle < 0 || priceDouble < 0) {
+
 			throw new HotelException();
 		}
 
@@ -46,32 +64,17 @@ public class Hotel {
 			throw new HotelException();
 		}
 
-		for (Hotel hotel : hotels) {
+		for (Hotel hotel : FenixFramework.getDomainRoot().getHotelSet()) {
 			if (hotel.getCode().equals(code)) {
 				throw new HotelException();
 			}
 		}
 
-		for (Hotel hotel : hotels) {
+		for (Hotel hotel : FenixFramework.getDomainRoot().getHotelSet()) {
 			if (hotel.getNif().equals(nif)) {
 				throw new HotelException();
 			}
 		}
-	}
-
-	public String getNif() {
-		return nif;
-	}
-
-	public String getIban() {
-		return iban;
-	}
-	
-	public double getPrice(Room.Type type) {
-		if (type == Type.SINGLE) {
-			return this.singlePrice;
-		}
-		else return this.doublePrice;
 	}
 
 	public Room hasVacancy(Room.Type type, LocalDate arrival, LocalDate departure) {
@@ -79,7 +82,7 @@ public class Hotel {
 			throw new HotelException();
 		}
 
-		for (Room room : this.rooms) {
+		for (Room room : getRoomSet()) {
 			if (room.isFree(type, arrival, departure)) {
 				return room;
 			}
@@ -87,32 +90,70 @@ public class Hotel {
 		return null;
 	}
 
-	public String getCode() {
-		return this.code;
+	public Set<Room> getAvailableRooms(LocalDate arrival, LocalDate departure) {
+		Set<Room> availableRooms = new HashSet<>();
+		for (Room room : getRoomSet()) {
+			if (room.isFree(room.getType(), arrival, departure)) {
+				availableRooms.add(room);
+			}
+		}
+		return availableRooms;
+	}
+/*
+	public String getNIF() {
+		return this.nif;
 	}
 
-	public String getName() {
-		return this.name;
+	public String getIBAN() {
+		return this.iban;
 	}
-	
+*/
+
 	public Processor getProcessor() {
 		return this.processor;
 	}
 
-	void addRoom(Room room) {
+/*	public double getPriceSingle() {
+		return this.priceSingle;
+	}
+
+	public double getPriceDouble() {
+		return this.priceDouble;
+	}*/
+
+	public double getPrice(Room.Type type) {
+		if (type == null) {
+			throw new HotelException();
+		} else {
+			return type.equals(Room.Type.SINGLE) ? getPriceSingle() : getPriceDouble();
+		}
+	}
+
+	public void setPrice(Room.Type type, double price) {
+		if (price < 0 || type == null) {
+			throw new HotelException();
+		} else if (type.equals(Room.Type.SINGLE)) {
+			setPriceSingle(price);
+		} else {
+			setPriceDouble(price);
+		}
+	}
+
+	private boolean isEmpty(String str) {
+		return str.trim().length() == 0;
+	}
+
+	@Override
+	public void addRoom(Room room) {
 		if (hasRoom(room.getNumber())) {
 			throw new HotelException();
 		}
 
-		this.rooms.add(room);
-	}
-
-	int getNumberOfRooms() {
-		return this.rooms.size();
+		super.addRoom(room);
 	}
 
 	public boolean hasRoom(String number) {
-		for (Room room : this.rooms) {
+		for (Room room : getRoomSet()) {
 			if (room.getNumber().equals(number)) {
 				return true;
 			}
@@ -121,7 +162,7 @@ public class Hotel {
 	}
 
 	private Booking getBooking(String reference) {
-		for (Room room : this.rooms) {
+		for (Room room : getRoomSet()) {
 			Booking booking = room.getBooking(reference);
 			if (booking != null) {
 				return booking;
@@ -130,11 +171,12 @@ public class Hotel {
 		return null;
 	}
 
-	public static String reserveRoom(Room.Type type, LocalDate arrival, LocalDate departure, String buyerNif, String buyerIban) {
-		for (Hotel hotel : Hotel.hotels) {
+	public static String reserveRoom(Room.Type type, LocalDate arrival, LocalDate departure, String buyerNIF,
+			String buyerIban) {
+		for (Hotel hotel : FenixFramework.getDomainRoot().getHotelSet()) {
 			Room room = hotel.hasVacancy(type, arrival, departure);
 			if (room != null) {
-				Booking booking = room.reserve(type, arrival, departure, buyerNif, buyerIban);
+				Booking booking = room.reserve(type, arrival, departure, buyerNIF, buyerIban);
 				hotel.getProcessor().submitBooking(booking);
 				return booking.getReference();
 			}
@@ -143,7 +185,7 @@ public class Hotel {
 	}
 
 	public static String cancelBooking(String reference) {
-		for (Hotel hotel : hotels) {
+		for (Hotel hotel : FenixFramework.getDomainRoot().getHotelSet()) {
 			Booking booking = hotel.getBooking(reference);
 			if (booking != null) {
 				return booking.cancel();
@@ -153,8 +195,8 @@ public class Hotel {
 	}
 
 	public static RoomBookingData getRoomBookingData(String reference) {
-		for (Hotel hotel : hotels) {
-			for (Room room : hotel.rooms) {
+		for (Hotel hotel : FenixFramework.getDomainRoot().getHotelSet()) {
+			for (Room room : hotel.getRoomSet()) {
 				Booking booking = room.getBooking(reference);
 				if (booking != null) {
 					return new RoomBookingData(room, booking);
@@ -164,43 +206,46 @@ public class Hotel {
 		throw new HotelException();
 	}
 
-	public static Set<String> bulkBooking(int number, LocalDate arrival, LocalDate departure, String buyerNif, String buyerIban) {
+	public static Set<String> bulkBooking(int number, LocalDate arrival, LocalDate departure, String buyerNIF,
+			String buyerIban) {
 		if (number < 1) {
 			throw new HotelException();
 		}
 
-		Set<Room> rooms = getAvailableRooms(number, arrival, departure);
+		List<Room> rooms = getAvailableRooms(number, arrival, departure);
 		if (rooms.size() < number) {
 			throw new HotelException();
 		}
-		
-		if(buyerNif == null || buyerIban == null)
-			throw new HotelException();
 
 		Set<String> references = new HashSet<>();
-		for (Room room : rooms) {
-			references.add(room.reserve(room.getType(), arrival, departure, buyerNif, buyerIban).getReference());
+
+		for (int i = 0; i < number; i++) {
+			Booking booking = rooms.get(i).reserve(rooms.get(i).getType(), arrival, departure, buyerNIF, buyerIban);
+			rooms.get(i).getHotel().getProcessor().submitBooking(booking);
+			references.add(booking.getReference());
 		}
 
 		return references;
 	}
 
-	static Set<Room> getAvailableRooms(int number, LocalDate arrival, LocalDate departure) {
-		Set<Room> rooms = new HashSet<>();
-		for (Hotel hotel : hotels) {
-			for (Room room : hotel.rooms) {
-				if (room.isFree(room.getType(), arrival, departure)) {
-					rooms.add(room);
-					if (rooms.size() == number) {
-						return rooms;
-					}
-				}
+	public static List<Room> getAvailableRooms(int number, LocalDate arrival, LocalDate departure) {
+		List<Room> availableRooms = new ArrayList<>();
+		for (Hotel hotel : FenixFramework.getDomainRoot().getHotelSet()) {
+			availableRooms.addAll(hotel.getAvailableRooms(arrival, departure));
+			if (availableRooms.size() >= number) {
+				return availableRooms;
 			}
 		}
-		return rooms;
+		return availableRooms;
 	}
 
-    public void removeRooms() {
-        rooms.clear();
-    }
+	public static Hotel getHotelByCode(String code) {
+		for (Hotel hotel : FenixFramework.getDomainRoot().getHotelSet()) {
+			if (hotel.getCode().equals(code)) {
+				return hotel;
+			}
+		}
+		return null;
+	}
+
 }

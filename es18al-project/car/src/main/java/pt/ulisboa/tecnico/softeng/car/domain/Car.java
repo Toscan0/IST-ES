@@ -1,7 +1,13 @@
 package pt.ulisboa.tecnico.softeng.car.domain;
 
-public class Car extends Vehicle {
-	public Car(String plate, int kilometers,  int pricePerDay, RentACar rentACar) {
-		super(plate, kilometers, pricePerDay,rentACar);
+import pt.ulisboa.tecnico.softeng.car.exception.CarException;
+
+public class Car extends Car_Base {
+
+	
+	public Car(String plate, int kilometers, double price, RentACar rentacar) {
+		super.init(plate, kilometers, price, rentacar);
+
 	}
+	
 }

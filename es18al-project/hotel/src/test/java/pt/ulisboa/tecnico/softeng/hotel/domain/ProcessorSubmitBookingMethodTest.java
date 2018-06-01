@@ -1,8 +1,6 @@
 package pt.ulisboa.tecnico.softeng.hotel.domain;
 
 import org.joda.time.LocalDate;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -11,35 +9,30 @@ import mockit.Expectations;
 import mockit.FullVerifications;
 import mockit.Mocked;
 import mockit.integration.junit4.JMockit;
-import pt.ulisboa.tecnico.softeng.hotel.domain.Room.Type;
+import pt.ulisboa.tecnico.softeng.bank.exception.BankException;
 import pt.ulisboa.tecnico.softeng.hotel.exception.RemoteAccessException;
 import pt.ulisboa.tecnico.softeng.hotel.interfaces.BankInterface;
 import pt.ulisboa.tecnico.softeng.hotel.interfaces.TaxInterface;
-import pt.ulisboa.tecnico.softeng.bank.exception.BankException;
 import pt.ulisboa.tecnico.softeng.tax.dataobjects.InvoiceData;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
 @RunWith(JMockit.class)
-public class InvoiceProcessorSubmitBookingMethodTest {
-	private static final String CANCEL_PAYMENT_REFERENCE = "CancelPaymentReference";
-	private static final String INVOICE_REFERENCE = "InvoiceReference";
-	private static final String PAYMENT_REFERENCE = "PaymentReference";
-	private static final int AMOUNT = 30;
-	private static final String IBAN = "1597536842";
-	private static final String NIF = "123456789";
-	private static final double priceSing = 125.33;
-	private static final double priceDoub = 225.33;
-	private static final LocalDate begin = new LocalDate(2016, 12, 19);
-	private static final LocalDate end = new LocalDate(2016, 12, 21);
-	private Hotel provider;
-	private Room room1;
+public class ProcessorSubmitBookingMethodTest extends RollbackTestAbstractClass {
+	private static LocalDate arrival = new LocalDate(2016, 12, 19);
+	private static LocalDate departure = new LocalDate(2016, 12, 24);
+	private final String NIF_HOTEL = "123456700";
+	private final String NIF_BUYER = "123456789";
+	private final String IBAN_BUYER = "IBAN_BUYER";
+
+	private Hotel hotel;
+	private Room room;
 	private Booking booking;
 
-	@Before
-	public void setUp() {
-		this.provider = new Hotel("PDL0001", "Cheyenne", "NIF", "IBAN", priceSing, priceDoub);
-		this.room1 = new Room(this.provider, "001", Type.SINGLE);
-		this.booking = new Booking(this.provider, begin, end, NIF, IBAN, room1.getPrice());
+	@Override
+	public void populate4Test() {
+		this.hotel = new Hotel("XPTO123", "Lisboa", this.NIF_HOTEL, "IBAN", 20.0, 30.0);
+		this.room = new Room(this.hotel, "01", Room.Type.SINGLE);
+		this.booking = new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER);
 	}
 
 	@Test
@@ -51,7 +44,7 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor().submitBooking(this.booking);
 
 		new FullVerifications() {
 			{
@@ -65,15 +58,15 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 		new Expectations() {
 			{
 				BankInterface.processPayment(this.anyString, this.anyDouble);
-				this.result = PAYMENT_REFERENCE;
 				TaxInterface.submitInvoice((InvoiceData) this.any);
 				this.result = new TaxException();
-				this.result = INVOICE_REFERENCE;
+				this.result = this.anyString;
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
-		this.provider.getProcessor().submitBooking(new Booking(this.provider, begin, end, NIF, IBAN, this.room1.getPrice()));
+		this.hotel.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor()
+				.submitBooking(new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER));
 
 		new FullVerifications(taxInterface) {
 			{
@@ -89,15 +82,15 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 		new Expectations() {
 			{
 				BankInterface.processPayment(this.anyString, this.anyDouble);
-				this.result = PAYMENT_REFERENCE;
 				TaxInterface.submitInvoice((InvoiceData) this.any);
 				this.result = new RemoteAccessException();
-				this.result = INVOICE_REFERENCE;
+				this.result = this.anyString;
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
-		this.provider.getProcessor().submitBooking(new Booking(this.provider, begin, end, NIF, IBAN, this.room1.getPrice()));
+		this.hotel.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor()
+				.submitBooking(new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER));
 
 		new FullVerifications(taxInterface) {
 			{
@@ -112,16 +105,16 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 			@Mocked final BankInterface bankInterface) {
 		new Expectations() {
 			{
+				TaxInterface.submitInvoice((InvoiceData) this.any);
 				BankInterface.processPayment(this.anyString, this.anyDouble);
 				this.result = new BankException();
-				this.result = PAYMENT_REFERENCE;
-				TaxInterface.submitInvoice((InvoiceData) this.any);
-				this.result = INVOICE_REFERENCE;
+				this.result = this.anyString;
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
-		this.provider.getProcessor().submitBooking(new Booking(this.provider, begin, end, NIF, IBAN, this.room1.getPrice()));
+		this.hotel.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor()
+				.submitBooking(new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER));
 
 		new FullVerifications(bankInterface) {
 			{
@@ -136,16 +129,16 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 			@Mocked final BankInterface bankInterface) {
 		new Expectations() {
 			{
+				TaxInterface.submitInvoice((InvoiceData) this.any);
 				BankInterface.processPayment(this.anyString, this.anyDouble);
 				this.result = new RemoteAccessException();
-				this.result = PAYMENT_REFERENCE;
-				TaxInterface.submitInvoice((InvoiceData) this.any);
-				this.result = INVOICE_REFERENCE;
+				this.result = this.anyString;
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
-		this.provider.getProcessor().submitBooking(new Booking(this.provider, begin, end, NIF, IBAN, this.room1.getPrice()));
+		this.hotel.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor()
+				.submitBooking(new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER));
 
 		new FullVerifications(bankInterface) {
 			{
@@ -167,7 +160,7 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor().submitBooking(this.booking);
 		this.booking.cancel();
 
 		new FullVerifications() {
@@ -184,16 +177,17 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 				TaxInterface.submitInvoice((InvoiceData) this.any);
 				BankInterface.processPayment(this.anyString, this.anyDouble);
 
+				TaxInterface.cancelInvoice(this.anyString);
 				BankInterface.cancelPayment(this.anyString);
 				this.result = new BankException();
-				this.result = CANCEL_PAYMENT_REFERENCE;
-				TaxInterface.cancelInvoice(this.anyString);
+				this.result = this.anyString;
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor().submitBooking(this.booking);
 		this.booking.cancel();
-		this.provider.getProcessor().submitBooking(new Booking(this.provider, begin, end, NIF, IBAN, this.room1.getPrice()));
+		this.hotel.getProcessor()
+				.submitBooking(new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER));
 
 		new FullVerifications(bankInterface) {
 			{
@@ -211,16 +205,17 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 				TaxInterface.submitInvoice((InvoiceData) this.any);
 				BankInterface.processPayment(this.anyString, this.anyDouble);
 
+				TaxInterface.cancelInvoice(this.anyString);
 				BankInterface.cancelPayment(this.anyString);
 				this.result = new RemoteAccessException();
-				this.result = CANCEL_PAYMENT_REFERENCE;
-				TaxInterface.cancelInvoice(this.anyString);
+				this.result = this.anyString;
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor().submitBooking(this.booking);
 		this.booking.cancel();
-		this.provider.getProcessor().submitBooking(new Booking(this.provider, begin, end, NIF, IBAN, this.room1.getPrice()));
+		this.hotel.getProcessor()
+				.submitBooking(new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER));
 
 		new FullVerifications(bankInterface) {
 			{
@@ -235,10 +230,10 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 			@Mocked final BankInterface bankInterface) {
 		new Expectations() {
 			{
-				BankInterface.processPayment(this.anyString, this.anyDouble);
 				TaxInterface.submitInvoice((InvoiceData) this.any);
+				BankInterface.processPayment(this.anyString, this.anyDouble);
+
 				BankInterface.cancelPayment(this.anyString);
-				this.result = CANCEL_PAYMENT_REFERENCE;
 				TaxInterface.cancelInvoice(this.anyString);
 				this.result = new Delegate() {
 					int i = 0;
@@ -253,9 +248,10 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor().submitBooking(this.booking);
 		this.booking.cancel();
-		this.provider.getProcessor().submitBooking(new Booking(this.provider, begin, end, NIF, IBAN, this.room1.getPrice()));
+		this.hotel.getProcessor()
+				.submitBooking(new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER));
 
 		new FullVerifications(taxInterface) {
 			{
@@ -270,11 +266,10 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 			@Mocked final BankInterface bankInterface) {
 		new Expectations() {
 			{
-				BankInterface.processPayment(this.anyString, this.anyDouble);
 				TaxInterface.submitInvoice((InvoiceData) this.any);
+				BankInterface.processPayment(this.anyString, this.anyDouble);
 
 				BankInterface.cancelPayment(this.anyString);
-				this.result = CANCEL_PAYMENT_REFERENCE;
 				TaxInterface.cancelInvoice(this.anyString);
 				this.result = new Delegate() {
 					int i = 0;
@@ -289,9 +284,10 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 			}
 		};
 
-		this.provider.getProcessor().submitBooking(this.booking);
+		this.hotel.getProcessor().submitBooking(this.booking);
 		this.booking.cancel();
-		this.provider.getProcessor().submitBooking(new Booking(this.provider, begin, end, NIF, IBAN, this.room1.getPrice()));
+		this.hotel.getProcessor()
+				.submitBooking(new Booking(this.room, arrival, departure, this.NIF_BUYER, this.IBAN_BUYER));
 
 		new FullVerifications(taxInterface) {
 			{
@@ -301,10 +297,4 @@ public class InvoiceProcessorSubmitBookingMethodTest {
 		};
 	}
 
-	@After
-	public void tearDown() {
-		Hotel.hotels.clear();
-	}
-
 }
-

@@ -1,36 +1,35 @@
 package pt.ulisboa.tecnico.softeng.hotel.domain;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.joda.time.LocalDate;
 
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
-public class Room {
+public class Room extends Room_Base {
 	public static enum Type {
 		SINGLE, DOUBLE
 	}
 
-	private final Hotel hotel;
-	private final String number;
-	private final Type type;
-	private final double price;
-	private final Set<Booking> bookings = new HashSet<>();
-
 	public Room(Hotel hotel, String number, Type type) {
 		checkArguments(hotel, number, type);
 
-		this.hotel = hotel;
-		this.number = number;
-		this.type = type;
-		this.price = hotel.getPrice(type);
+		setNumber(number);
+		setType(type);
 
-		this.hotel.addRoom(this);
+		hotel.addRoom(this);
+	}
+
+	public void delete() {
+		setHotel(null);
+
+		for (Booking booking : getBookingSet()) {
+			booking.delete();
+		}
+
+		deleteDomainObject();
 	}
 
 	private void checkArguments(Hotel hotel, String number, Type type) {
-		if (hotel == null || number == null || number.trim().length() == 0 || type == null  ) {
+		if (hotel == null || number == null || number.trim().length() == 0 || type == null) {
 			throw new HotelException();
 		}
 
@@ -39,32 +38,12 @@ public class Room {
 		}
 	}
 
-	public Hotel getHotel() {
-		return this.hotel;
-	}
-
-	public String getNumber() {
-		return this.number;
-	}
-	
-	public double getPrice() {
-		return this.price;
-	}
-
-	public Type getType() {
-		return this.type;
-	}
-
-	int getNumberOfBookings() {
-		return this.bookings.size();
-	}
-
 	boolean isFree(Type type, LocalDate arrival, LocalDate departure) {
-		if (!type.equals(this.type)) {
+		if (!type.equals(getType())) {
 			return false;
 		}
 
-		for (Booking booking : this.bookings) {
+		for (Booking booking : getBookingSet()) {
 			if (booking.conflict(arrival, departure)) {
 				return false;
 			}
@@ -73,8 +52,8 @@ public class Room {
 		return true;
 	}
 
-	public Booking reserve(Type type, LocalDate arrival, LocalDate departure, String buyerNif, String buyerIban) {
-		if (type == null || arrival == null || departure == null || buyerNif == null || buyerIban == null) {
+	public Booking reserve(Type type, LocalDate arrival, LocalDate departure, String buyerNIF, String buyerIban) {
+		if (type == null || arrival == null || departure == null) {
 			throw new HotelException();
 		}
 
@@ -82,15 +61,15 @@ public class Room {
 			throw new HotelException();
 		}
 
-		Booking booking = new Booking(this.hotel, arrival, departure, buyerNif, buyerIban, this.price);
-		this.bookings.add(booking);
+		Booking booking = new Booking(this, arrival, departure, buyerNIF, buyerIban);
+
 		return booking;
 	}
 
 	public Booking getBooking(String reference) {
-		for (Booking booking : this.bookings) {
+		for (Booking booking : getBookingSet()) {
 			if (booking.getReference().equals(reference)
-					|| (booking.isCancelled() && booking.getCancellation().equals(reference))) {
+					|| booking.isCancelled() && booking.getCancellation().equals(reference)) {
 				return booking;
 			}
 		}

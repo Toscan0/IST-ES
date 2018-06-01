@@ -1,108 +1,70 @@
 package pt.ulisboa.tecnico.softeng.hotel.domain;
 
 import org.joda.time.LocalDate;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import mockit.Mocked;
+import mockit.integration.junit4.JMockit;
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
+import pt.ulisboa.tecnico.softeng.hotel.interfaces.BankInterface;
+import pt.ulisboa.tecnico.softeng.hotel.interfaces.TaxInterface;
 
-public class BookingConstructorTest {
-	private final LocalDate arrival = new LocalDate(2016, 12, 19);
-	private final LocalDate departure = new LocalDate(2016, 12, 21);
-	private final double price1 = 124.5;
-	private final double price2 = 224.5;
-	private Hotel hotel;
+@RunWith(JMockit.class)
+public class BookingConstructorTest extends RollbackTestAbstractClass {
+	private static final LocalDate ARRIVAL = new LocalDate(2016, 12, 19);
+	private static final LocalDate DEPARTURE = new LocalDate(2016, 12, 21);
+	private static final double ROOM_PRICE = 20.0;
+	private static String NIF_BUYER = "123456789";
+	private static String IBAN_BUYER = "IBAN_BUYER";
+	private Room room;
 
-	@Before
-	public void setUp() {
-		this.hotel = new Hotel("XPTO123", "Londres", "NIF", "IBAN", price1, price2);
+	@Mocked
+	private TaxInterface taxInterface;
+	@Mocked
+	private BankInterface bankInterface;
+
+	@Override
+	public void populate4Test() {
+		Hotel hotel = new Hotel("XPTO123", "Londres", "NIF", "IBAN", 20.0, 30.0);
+		this.room = new Room(hotel, "01", Room.Type.SINGLE);
 	}
 
 	@Test
 	public void success() {
-		Booking booking = new Booking(this.hotel, this.arrival, this.departure, "NIF", "IBAN", price1);
+		Booking booking = new Booking(this.room, ARRIVAL, DEPARTURE, NIF_BUYER, IBAN_BUYER);
 
-		Assert.assertTrue(booking.getReference().startsWith(this.hotel.getCode()));
+		Assert.assertTrue(booking.getReference().startsWith(this.room.getHotel().getCode()));
 		Assert.assertTrue(booking.getReference().length() > Hotel.CODE_SIZE);
-		Assert.assertEquals(this.arrival, booking.getArrival());
-		Assert.assertEquals(this.departure, booking.getDeparture());
+		Assert.assertEquals(ARRIVAL, booking.getArrival());
+		Assert.assertEquals(DEPARTURE, booking.getDeparture());
+		Assert.assertEquals(ROOM_PRICE * 2, booking.getPrice(), 0.0d);
 	}
 
 	@Test(expected = HotelException.class)
-	public void nullHotel() {
-		new Booking(null, this.arrival, this.departure, "NIF", "IBAN", price1);
+	public void nullRoom() {
+		new Booking(null, ARRIVAL, DEPARTURE, NIF_BUYER, IBAN_BUYER);
 	}
 
 	@Test(expected = HotelException.class)
 	public void nullArrival() {
-		new Booking(this.hotel, null, this.departure, "NIF", "IBAN", price1);
+		new Booking(this.room, null, DEPARTURE, NIF_BUYER, IBAN_BUYER);
 	}
 
 	@Test(expected = HotelException.class)
 	public void nullDeparture() {
-		new Booking(this.hotel, this.arrival, null, "NIF", "IBAN", price1);
+		new Booking(this.room, ARRIVAL, null, NIF_BUYER, IBAN_BUYER);
 	}
 
 	@Test(expected = HotelException.class)
 	public void departureBeforeArrival() {
-		new Booking(this.hotel, this.arrival, this.arrival.minusDays(1), "NIF", "IBAN", price1);
+		new Booking(this.room, ARRIVAL, ARRIVAL.minusDays(1), NIF_BUYER, IBAN_BUYER);
 	}
 
 	@Test
 	public void arrivalEqualDeparture() {
-		new Booking(this.hotel, this.arrival, this.arrival, "NIF", "IBAN", price1);
-	}
-
-
-	@Test(expected = HotelException.class)
-	public void nullNif() {
-		new Booking(null, this.arrival, this.departure, null, "IBAN", price1);
-	}
-	
-
-	@Test(expected = HotelException.class)
-	public void emptyNif() {
-		new Booking(null, this.arrival, this.departure, "", "IBAN", price1);
-	}
-	
-
-	@Test(expected = HotelException.class)
-	public void spaceNif() {
-		new Booking(null, this.arrival, this.departure, "  ", "IBAN", price1);
-	}
-	
-
-	@Test(expected = HotelException.class)
-	public void nullIban() {
-		new Booking(null, this.arrival, this.departure, "NIF", null, price1);
-	}
-	
-
-	@Test(expected = HotelException.class)
-	public void emptyIban() {
-		new Booking(null, this.arrival, this.departure, "NIF", "", price1);
-	}
-	
-	@Test(expected = HotelException.class)
-	public void spaceIban() {
-		new Booking(null, this.arrival, this.departure, "NIF", "  ", price1);
-	}
-	
-	@Test(expected = HotelException.class)
-	public void zeroPrice() {
-		new Booking(null, this.arrival, this.departure, "NIF", "IBAN", 0);
-	}
-	
-	@Test(expected = HotelException.class)
-	public void negativePrice() {
-		new Booking(null, this.arrival, this.departure, "NIF", "IBAN", -1.23);
-	}
-	
-	@After
-	public void tearDown() {
-		Hotel.hotels.clear();
+		new Booking(this.room, ARRIVAL, ARRIVAL, NIF_BUYER, IBAN_BUYER);
 	}
 
 }

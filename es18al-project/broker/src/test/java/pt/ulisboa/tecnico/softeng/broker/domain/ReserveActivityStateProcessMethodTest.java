@@ -1,109 +1,120 @@
 package pt.ulisboa.tecnico.softeng.broker.domain;
 
-import org.joda.time.LocalDate;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import mockit.Delegate;
 import mockit.Expectations;
-import mockit.Injectable;
 import mockit.Mocked;
 import mockit.integration.junit4.JMockit;
 import pt.ulisboa.tecnico.softeng.activity.exception.ActivityException;
 import pt.ulisboa.tecnico.softeng.broker.domain.Adventure.State;
 import pt.ulisboa.tecnico.softeng.broker.exception.RemoteAccessException;
 import pt.ulisboa.tecnico.softeng.broker.interfaces.ActivityInterface;
+import pt.ulisboa.tecnico.softeng.broker.interfaces.TaxInterface;
 
 @RunWith(JMockit.class)
-public class ReserveActivityStateProcessMethodTest {
-	private static final String IBAN = "BK01987654321";
-	private static final int AMOUNT = 300;
-	private static final int AGE = 20;
-	private static final String ACTIVITY_CONFIRMATION = "ActivityConfirmation";
-	private static final LocalDate begin = new LocalDate(2016, 12, 19);
-	private static final LocalDate end = new LocalDate(2016, 12, 21);
-	private Adventure adventure;
-	private BClient bclient;
-	
-	@Injectable
-	private Broker broker;
+public class ReserveActivityStateProcessMethodTest extends RollbackTestAbstractClass {
+	@Mocked
+	private TaxInterface taxInterface;
 
-	@Before
-	public void setUp() {
-		bclient = new BClient(IBAN, "NIF", AGE); 
-		this.adventure = new Adventure(this.broker, begin, end, bclient, AMOUNT, true);
+	@Override
+	public void populate4Test() {
+		this.broker = new Broker("BR01", "eXtremeADVENTURE", BROKER_NIF_AS_SELLER, NIF_AS_BUYER, BROKER_IBAN);
+		this.client = new Client(this.broker, CLIENT_IBAN, CLIENT_NIF, DRIVING_LICENSE, AGE);
+		this.adventure = new Adventure(this.broker, this.begin, this.end, this.client, MARGIN);
+
 		this.adventure.setState(State.RESERVE_ACTIVITY);
 	}
 
 	@Test
 	public void successNoBookRoom(@Mocked final ActivityInterface activityInterface) {
-		Adventure sameDayAdventure = new Adventure(this.broker, begin, begin, bclient, AMOUNT, true);
+		Adventure sameDayAdventure = new Adventure(this.broker, this.begin, this.begin, this.client, MARGIN);
 		sameDayAdventure.setState(State.RESERVE_ACTIVITY);
 
 		new Expectations() {
 			{
-				ActivityInterface.reserveActivity(begin, begin, AGE);
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.begin, AGE, this.anyString, this.anyString);
 				this.result = ACTIVITY_CONFIRMATION;
 			}
 		};
 
 		sameDayAdventure.process();
-		if(this.adventure.isRentVehicle()) {
-			Assert.assertEquals(State.RENT_VEHICLE, sameDayAdventure.getState());
-		}else {
-			Assert.assertEquals(State.CONFIRMED, sameDayAdventure.getState());
-		}
+
+		Assert.assertEquals(State.PROCESS_PAYMENT, sameDayAdventure.getState().getValue());
+	}
+
+	@Test
+	public void successToRentVehicle(@Mocked final ActivityInterface activityInterface) {
+		Adventure adv = new Adventure(this.broker, this.begin, this.begin, this.client, MARGIN, true);
+		adv.setState(State.RESERVE_ACTIVITY);
+
+		new Expectations() {
+			{
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.begin, AGE, this.anyString, this.anyString);
+				this.result = ACTIVITY_CONFIRMATION;
+			}
+		};
+
+		adv.process();
+
+		Assert.assertEquals(State.RENT_VEHICLE, adv.getState().getValue());
 	}
 
 	@Test
 	public void successBookRoom(@Mocked final ActivityInterface activityInterface) {
 		new Expectations() {
 			{
-				ActivityInterface.reserveActivity(begin, end, AGE);
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.end, AGE, this.anyString, this.anyString);
 				this.result = ACTIVITY_CONFIRMATION;
 			}
 		};
 
 		this.adventure.process();
 
-		Assert.assertEquals(State.BOOK_ROOM, this.adventure.getState());
+		Assert.assertEquals(State.BOOK_ROOM, this.adventure.getState().getValue());
 	}
 
 	@Test
 	public void activityException(@Mocked final ActivityInterface activityInterface) {
 		new Expectations() {
 			{
-				ActivityInterface.reserveActivity(begin, end, AGE);
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.end, AGE, this.anyString, this.anyString);
 				this.result = new ActivityException();
 			}
 		};
 
 		this.adventure.process();
 
-		Assert.assertEquals(State.UNDO, this.adventure.getState());
+		Assert.assertEquals(State.UNDO, this.adventure.getState().getValue());
 	}
 
 	@Test
 	public void singleRemoteAccessException(@Mocked final ActivityInterface activityInterface) {
 		new Expectations() {
 			{
-				ActivityInterface.reserveActivity(begin, end, AGE);
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.end, AGE, this.anyString, this.anyString);
 				this.result = new RemoteAccessException();
 			}
 		};
 
 		this.adventure.process();
 
-		Assert.assertEquals(State.RESERVE_ACTIVITY, this.adventure.getState());
+		Assert.assertEquals(State.RESERVE_ACTIVITY, this.adventure.getState().getValue());
 	}
 
 	@Test
 	public void maxRemoteAccessException(@Mocked final ActivityInterface activityInterface) {
 		new Expectations() {
 			{
-				ActivityInterface.reserveActivity(begin, end, AGE);
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.end, AGE, this.anyString, this.anyString);
 				this.result = new RemoteAccessException();
 			}
 		};
@@ -114,14 +125,15 @@ public class ReserveActivityStateProcessMethodTest {
 		this.adventure.process();
 		this.adventure.process();
 
-		Assert.assertEquals(State.UNDO, this.adventure.getState());
+		Assert.assertEquals(State.UNDO, this.adventure.getState().getValue());
 	}
 
 	@Test
 	public void maxMinusOneRemoteAccessException(@Mocked final ActivityInterface activityInterface) {
 		new Expectations() {
 			{
-				ActivityInterface.reserveActivity(begin, end, AGE);
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.end, AGE, this.anyString, this.anyString);
 				this.result = new RemoteAccessException();
 			}
 		};
@@ -131,14 +143,15 @@ public class ReserveActivityStateProcessMethodTest {
 		this.adventure.process();
 		this.adventure.process();
 
-		Assert.assertEquals(State.RESERVE_ACTIVITY, this.adventure.getState());
+		Assert.assertEquals(State.RESERVE_ACTIVITY, this.adventure.getState().getValue());
 	}
 
 	@Test
 	public void twoRemoteAccessExceptionOneSuccess(@Mocked final ActivityInterface activityInterface) {
 		new Expectations() {
 			{
-				ActivityInterface.reserveActivity(begin, end, AGE);
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.end, AGE, this.anyString, this.anyString);
 				this.result = new Delegate() {
 					int i = 0;
 
@@ -160,14 +173,15 @@ public class ReserveActivityStateProcessMethodTest {
 		this.adventure.process();
 		this.adventure.process();
 
-		Assert.assertEquals(State.BOOK_ROOM, this.adventure.getState());
+		Assert.assertEquals(State.BOOK_ROOM, this.adventure.getState().getValue());
 	}
 
 	@Test
 	public void oneRemoteAccessExceptionOneActivityException(@Mocked final ActivityInterface activityInterface) {
 		new Expectations() {
 			{
-				ActivityInterface.reserveActivity(begin, end, AGE);
+				ActivityInterface.reserveActivity(ReserveActivityStateProcessMethodTest.this.begin,
+						ReserveActivityStateProcessMethodTest.this.end, AGE, this.anyString, this.anyString);
 				this.result = new Delegate() {
 					int i = 0;
 
@@ -187,6 +201,7 @@ public class ReserveActivityStateProcessMethodTest {
 		this.adventure.process();
 		this.adventure.process();
 
-		Assert.assertEquals(State.UNDO, this.adventure.getState());
+		Assert.assertEquals(State.UNDO, this.adventure.getState().getValue());
 	}
+
 }

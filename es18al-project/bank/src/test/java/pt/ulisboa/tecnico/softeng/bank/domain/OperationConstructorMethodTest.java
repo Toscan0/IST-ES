@@ -1,19 +1,17 @@
 package pt.ulisboa.tecnico.softeng.bank.domain;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import pt.ulisboa.tecnico.softeng.bank.domain.Operation.Type;
 import pt.ulisboa.tecnico.softeng.bank.exception.BankException;
 
-public class OperationConstructorMethodTest {
+public class OperationConstructorMethodTest extends RollbackTestAbstractClass {
 	private Bank bank;
 	private Account account;
 
-	@Before
-	public void setUp() {
+	@Override
+	public void populate4Test() {
 		this.bank = new Bank("Money", "BK01");
 		Client client = new Client(this.bank, "António");
 		this.account = new Account(this.bank, client);
@@ -27,7 +25,7 @@ public class OperationConstructorMethodTest {
 		Assert.assertTrue(operation.getReference().length() > Bank.CODE_SIZE);
 		Assert.assertEquals(Type.DEPOSIT, operation.getType());
 		Assert.assertEquals(this.account, operation.getAccount());
-		Assert.assertEquals(1000, operation.getValue(), 0.0d);
+		Assert.assertEquals(1000, operation.getValue(), 0);
 		Assert.assertTrue(operation.getTime() != null);
 		Assert.assertEquals(operation, this.bank.getOperation(operation.getReference()));
 	}
@@ -56,11 +54,6 @@ public class OperationConstructorMethodTest {
 	@Test(expected = BankException.class)
 	public void negativeAmount() {
 		new Operation(Type.WITHDRAW, this.account, -1000);
-	}
-
-	@After
-	public void tearDown() {
-		Bank.banks.clear();
 	}
 
 }

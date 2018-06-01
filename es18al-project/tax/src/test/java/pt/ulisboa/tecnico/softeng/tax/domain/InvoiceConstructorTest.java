@@ -1,16 +1,19 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import org.joda.time.LocalDate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
-public class InvoiceConstructorTest {
+public class InvoiceConstructorTest extends RollbackTestAbstractClass {
 	private static final String SELLER_NIF = "123456789";
 	private static final String BUYER_NIF = "987654321";
 	private static final String FOOD = "FOOD";
@@ -22,13 +25,28 @@ public class InvoiceConstructorTest {
 	private Buyer buyer;
 	private ItemType itemType;
 
-	@Before
-	public void setUp() {
-		IRS irs = IRS.getIRS();
-		this.seller = new Seller(irs, SELLER_NIF, "José Vendido", "Somewhere");
-		this.buyer = new Buyer(irs, BUYER_NIF, "Manuel Comprado", "Anywhere");
-		this.itemType = new ItemType(irs, FOOD, TAX);
+	IRS irs;
+
+	@Override
+	public void populate4Test() {
+		this.irs = new IRS();
+		this.buyer = new Buyer();
+		this.buyer.setIrs(this.irs);
+		this.buyer.setAddress( "Anywhere");
+		this.buyer.setName("Manuel Comprado");
+		this.buyer.setNIF(BUYER_NIF);
+		
+		this.seller = new Seller();;
+		this.seller.setIrs(this.irs);
+		this.seller.setAddress("Somewhere");
+		this.seller.setName("José Vendido");
+		this.seller.setNIF(SELLER_NIF);	
+		this.itemType = new ItemType(this.irs, FOOD, TAX);
+		
+		this.irs.addTaxPayer(this.buyer);
+		this.irs.addTaxPayer(this.seller);
 	}
+
 
 	@Test
 	public void success() {
@@ -40,7 +58,8 @@ public class InvoiceConstructorTest {
 		assertEquals(this.itemType, invoice.getItemType());
 		assertEquals(this.seller, invoice.getSeller());
 		assertEquals(this.buyer, invoice.getBuyer());
-		assertEquals(VALUE * TAX / 100.0, invoice.getIva(), 0.00001f);
+		assertEquals(VALUE * TAX / 100.0, invoice.getIVA(), 0.00001f);
+		assertFalse(invoice.isCancelled());
 
 		assertEquals(invoice, this.seller.getInvoiceByReference(invoice.getReference()));
 		assertEquals(invoice, this.buyer.getInvoiceByReference(invoice.getReference()));
@@ -85,9 +104,5 @@ public class InvoiceConstructorTest {
 		new Invoice(VALUE, new LocalDate(1970, 01, 01), this.itemType, this.seller, this.buyer);
 	}
 
-	@After
-	public void tearDown() {
-		IRS.getIRS().clearAll();
-	}
 
 }

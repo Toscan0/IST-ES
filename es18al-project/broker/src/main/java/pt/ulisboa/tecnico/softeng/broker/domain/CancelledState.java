@@ -9,46 +9,55 @@ import pt.ulisboa.tecnico.softeng.broker.domain.Adventure.State;
 import pt.ulisboa.tecnico.softeng.broker.exception.RemoteAccessException;
 import pt.ulisboa.tecnico.softeng.broker.interfaces.ActivityInterface;
 import pt.ulisboa.tecnico.softeng.broker.interfaces.BankInterface;
+import pt.ulisboa.tecnico.softeng.broker.interfaces.CarInterface;
 import pt.ulisboa.tecnico.softeng.broker.interfaces.HotelInterface;
+import pt.ulisboa.tecnico.softeng.car.exception.CarException;
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
-public class CancelledState extends AdventureState {
+public class CancelledState extends CancelledState_Base {
 	private static Logger logger = LoggerFactory.getLogger(CancelledState.class);
 
 	@Override
-	public State getState() {
+	public State getValue() {
 		return State.CANCELLED;
 	}
 
 	@Override
-	public void process(Adventure adventure) {
-		if (adventure.getPaymentCancellation() != null) {
+	public void process() {
+		if (getAdventure().getPaymentCancellation() != null) {
 			try {
-				BankInterface.getOperationData(adventure.getPaymentConfirmation());
+				BankInterface.getOperationData(getAdventure().getPaymentConfirmation());
 			} catch (BankException | RemoteAccessException e) {
 				return;
 			}
 
 			try {
-				BankInterface.getOperationData(adventure.getPaymentCancellation());
+				BankInterface.getOperationData(getAdventure().getPaymentCancellation());
 			} catch (BankException | RemoteAccessException e) {
 				return;
 			}
 		}
 
-		if (adventure.getActivityCancellation() != null) {
+		if (getAdventure().getActivityCancellation() != null) {
 			try {
-				ActivityInterface.getActivityReservationData(adventure.getActivityCancellation());
+				ActivityInterface.getActivityReservationData(getAdventure().getActivityCancellation());
 			} catch (ActivityException | RemoteAccessException e) {
 				return;
 			}
-
 		}
 
-		if (adventure.getRoomCancellation() != null) {
+		if (getAdventure().getRoomCancellation() != null) {
 			try {
-				HotelInterface.getRoomBookingData(adventure.getRoomCancellation());
+				HotelInterface.getRoomBookingData(getAdventure().getRoomCancellation());
 			} catch (HotelException | RemoteAccessException e) {
+				return;
+			}
+		}
+
+		if (getAdventure().getRentingCancellation() != null) {
+			try {
+				CarInterface.getRentingData(getAdventure().getRentingCancellation());
+			} catch (CarException | RemoteAccessException e) {
 				return;
 			}
 		}

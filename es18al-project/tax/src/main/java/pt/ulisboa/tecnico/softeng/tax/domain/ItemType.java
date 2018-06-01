@@ -1,16 +1,20 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
+import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
-public class ItemType {
-	public final String name;
-	public int tax;
+public class ItemType extends ItemType_Base{
+	//public final String name;
+	//public int tax;
 
 	public ItemType(IRS irs, String name, int tax) {
 		checkArguments(irs, name, tax);
-		this.name = name;
-		this.tax = tax;
-
+		//this.name = name;
+		setName(name);
+		
+		//this.tax = tax;
+		setTax(tax);
+		
 		irs.addItemType(this);
 	}
 
@@ -27,13 +31,23 @@ public class ItemType {
 			throw new TaxException();
 		}
 	}
-
+/*
 	public String getName() {
 		return this.name;
 	}
 
 	public int getTax() {
 		return this.tax;
+	}*/
+	
+	public void delete() {
+		setIrs(null);
+		
+		for (Invoice invoices : getInvoiceSet()) {
+			invoices.delete();
+		}
+
+		deleteDomainObject();
 	}
 
 }

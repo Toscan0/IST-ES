@@ -7,122 +7,99 @@ import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.broker.exception.BrokerException;
 
-public class Broker {
+public class Broker extends Broker_Base {
 	private static Logger logger = LoggerFactory.getLogger(Broker.class);
 
-	public static Set<Broker> brokers = new HashSet<>();
+	
 
-	private final String code;
-	private final String name;
-
-	private final String nifSeller;
-	private final String nifBuyer;
-	private final Set<Adventure> adventures = new HashSet<>();
-	private final Set<BulkRoomBooking> bulkBookings = new HashSet<>();
-
-	/*public Broker(String code, String name) {
-		checkCode(code);
-		this.code = code;
-
-		checkName(name);
-		this.name = name;
-
-		Broker.brokers.add(this);
-	}*/
-
-	public Broker(String code, String name, String nifSeller, String nifBuyer) {
-		checkCode(code);
-		this.code = code;
-		
-		checkName(name);
-		this.name = name;
-		
-		checkNifSeller(nifSeller);
-		this.nifSeller = nifSeller;
-		
-		checkNifBuyer(nifBuyer);
-		this.nifBuyer = nifBuyer;
-		
-		Broker.brokers.add(this);
+	@Override
+	public int getCounter() {
+		int counter = super.getCounter() + 1;
+		setCounter(counter);
+		return counter;
 	}
 
-	private void checkCode(String code) {
-		if (code == null || code.trim().length() == 0) {
-			throw new BrokerException();
+	public Broker(String code, String name, String nifAsSeller, String nifAsBuyer, String iban) {
+		checkArguments(code, name, nifAsSeller, nifAsBuyer, iban);
+
+		setCode(code);
+		setName(name);
+
+		setNifAsSeller(nifAsSeller);
+		setNifAsBuyer(nifAsBuyer);
+		setIban(iban);
+
+		FenixFramework.getDomainRoot().addBroker(this);
+	}
+
+	public void delete() {
+		setRoot(null);
+		
+		for (Client client : getClientSet()) {
+			client.delete();
+		}
+		
+		for (Adventure adventure : getAdventureSet()) {
+			adventure.delete();
+		}
+		
+		
+		for (BulkRoomBooking bulkRoomBooking : getRoomBulkBookingSet()) {
+			bulkRoomBooking.delete();
 		}
 
-		for (Broker broker : Broker.brokers) {
+		deleteDomainObject();
+	}
+
+	private void checkArguments(String code, String name, String nifAsSeller, String nifAsBuyer, String iban) {
+		if (code == null || code.trim().length() == 0 || name == null || name.trim().length() == 0
+				|| nifAsSeller == null || nifAsSeller.trim().length() == 0 || nifAsBuyer == null
+				|| nifAsBuyer.trim().length() == 0 || iban == null || iban.trim().length() == 0) {
+			throw new BrokerException();
+		}
+		
+		if (nifAsSeller.equals(nifAsBuyer)) {
+			throw new BrokerException();
+		}
+		
+		for (Broker broker : FenixFramework.getDomainRoot().getBrokerSet()) {
 			if (broker.getCode().equals(code)) {
 				throw new BrokerException();
 			}
 		}
-	}
-	
-
-	private void checkNifSeller(String nif) {
-		if (nif == null || nif.trim().length() == 0) {
-			throw new BrokerException();
-		}
-
-		for (Broker broker : Broker.brokers) {
-			if (broker.getNifSeller().equals(nif)) {
+		
+		for (Broker broker : FenixFramework.getDomainRoot().getBrokerSet()) {
+			if (broker.getNifAsSeller().equals(nifAsSeller) || broker.getNifAsSeller().equals(nifAsBuyer)
+					|| broker.getNifAsBuyer().equals(nifAsSeller) || broker.getNifAsBuyer().equals(nifAsBuyer)) {
 				throw new BrokerException();
 			}
 		}
-	}
-	
-	private void checkNifBuyer(String nif) {
-		if (nif == null || nif.trim().length() == 0) {
-			throw new BrokerException();
-		}
 
-		for (Broker broker : Broker.brokers) {
-			if (broker.getNifBuyer().equals(nif)) {
-				throw new BrokerException();
+	}
+
+
+	public Client getClientByNIF(String NIF) {
+		for (Client client : getClientSet()) {
+			if (client.getNIF().equals(NIF)) {
+				return client;
 			}
 		}
+		return null;
 	}
 
-	private void checkName(String name) {
-		if (name == null || name.trim().length() == 0) {
-			throw new BrokerException();
-		}
+	public boolean drivingLicenseIsRegistered(String drivingLicense) {
+		return getClientSet().stream().anyMatch(client -> client.getDrivingLicense().equals(drivingLicense));
 	}
 
-	String getCode() {
-		return this.code;
-	}
+	/*public void addClient(Client client) {
+		this.clients.add(client);
+	}*/
 
-	String getName() {
-		return this.name;
-	}
-
-	public String getNifSeller() {
-		return nifSeller;
-	}
-
-	public String getNifBuyer() {
-		return nifBuyer;
-	}
-
-	public int getNumberOfAdventures() {
-		return this.adventures.size();
-	}
-
-	public void addAdventure(Adventure adventure) {
-		this.adventures.add(adventure);
-	}
-
-	public boolean hasAdventure(Adventure adventure) {
-		return this.adventures.contains(adventure);
-	}
-
-	public void bulkBooking(int number, LocalDate arrival, LocalDate departure, String buyerNif, String buyerIban) {
-		BulkRoomBooking bulkBooking = new BulkRoomBooking(number, arrival, departure, buyerNif, buyerIban);
-		this.bulkBookings.add(bulkBooking);
+	public void bulkBooking(int number, LocalDate arrival, LocalDate departure) {
+		BulkRoomBooking bulkBooking = new BulkRoomBooking(this, number, arrival, departure, getNifAsBuyer(), getIban());
 		bulkBooking.processBooking();
 	}
-
 }

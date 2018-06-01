@@ -1,39 +1,44 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
+import pt.ist.fenixframework.FenixFramework;
 import org.joda.time.LocalDate;
 
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
-public class Invoice {
+public class Invoice extends Invoice_Base{
 	private static int counter = 0;
 
-	private final String reference;
-	private final double value;
-	private final double iva;
-	private final LocalDate date;
-	private final ItemType itemType;
+	//private final String reference;
+	//private final double value;
+	//private final double iva;
+	//private final LocalDate date;
+	//private final ItemType itemType;
 	private final Seller seller;
 	private final Buyer buyer;
-	private String cancel;
-	private LocalDate cancellationDate;
+	private boolean cancelled = false;
 
-	Invoice(double value, LocalDate date, ItemType itemType, Seller seller, Buyer buyer) {
+	Invoice(double value, LocalDate date, ItemType itemType, Seller seller, Buyer buyer) {	
 		checkArguments(value, date, itemType, seller, buyer);
 
-		this.reference = Integer.toString(++Invoice.counter);
-		this.value = value;
-		this.date = date;
-		this.itemType = itemType;
+		//this.reference = Integer.toString(++Invoice.counter);
+		setReference(Integer.toString(++Invoice.counter));
+		//this.value = value;
+		setValue(value);
+		//this.date = date;
+		setDate(date);
+		//this.itemType = itemType;
+		setItemType(itemType);
 		this.seller = seller;
 		this.buyer = buyer;
-		this.iva = value * itemType.getTax() / 100;
-
+		//this.iva = value * itemType.getTax() / 100;
+		setIVA(value * itemType.getTax() / 100);
+		
 		seller.addInvoice(this);
 		buyer.addInvoice(this);
 	}
 
 	private void checkArguments(double value, LocalDate date, ItemType itemType, Seller seller, Buyer buyer) {
-		if (value <= 0.0d) {
+		if (value <= 0.0f) {
 			throw new TaxException();
 		}
 
@@ -53,19 +58,7 @@ public class Invoice {
 			throw new TaxException();
 		}
 	}
-
-	public void cancel(){
-		
-		this.cancel = "CANCEL" + this.reference;
-		this.cancellationDate = new LocalDate();
-		
-	}
-	
-	public boolean isCancelled() {
-		return this.cancel != null;
-	}
-	
-	
+/*
 	public String getReference() {
 		return this.reference;
 	}
@@ -84,7 +77,7 @@ public class Invoice {
 
 	public ItemType getItemType() {
 		return this.itemType;
-	}
+	}*/
 
 	public Seller getSeller() {
 		return this.seller;
@@ -93,12 +86,24 @@ public class Invoice {
 	public Buyer getBuyer() {
 		return this.buyer;
 	}
-	
-	public LocalDate getCancellationDate() {
-		return cancellationDate;
+
+	public void cancel() {
+		this.cancelled = true;
 	}
 
-	public void setCancellationDate(LocalDate cancellationDate) {
-		this.cancellationDate = cancellationDate;
+	public boolean isCancelled() {
+		return this.cancelled;
 	}
+	
+	
+	public void delete() {
+		setItemType(null);
+		setTaxPayerBuyer(null);
+		setTaxPayerSeller(null);
+		
+		
+		
+		deleteDomainObject();
+	}
+
 }

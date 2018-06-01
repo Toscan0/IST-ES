@@ -6,36 +6,38 @@ import pt.ulisboa.tecnico.softeng.broker.interfaces.HotelInterface;
 import pt.ulisboa.tecnico.softeng.hotel.domain.Room;
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
-public class BookRoomState extends AdventureState {
+public class BookRoomState extends BookRoomState_Base {
 	public static final int MAX_REMOTE_ERRORS = 10;
 
 	@Override
-	public State getState() {
+	public State getValue() {
 		return State.BOOK_ROOM;
 	}
 
 	@Override
-	public void process(Adventure adventure) {
+	public void process() {
 		try {
-			adventure.setRoomConfirmation( //Verificar depois o NIF
-					HotelInterface.reserveRoom(Room.Type.SINGLE, adventure.getBegin(), adventure.getEnd(), "NIF", adventure.getBClient().getIBAN()));
+			getAdventure().setRoomConfirmation(
+					HotelInterface.reserveRoom(Room.Type.SINGLE, getAdventure().getBegin(), getAdventure().getEnd(),
+							getAdventure().getBroker().getNifAsBuyer(), getAdventure().getBroker().getIban()));
+			getAdventure()
+					.incAmountToPay(HotelInterface.getRoomBookingData(getAdventure().getRoomConfirmation()).getPrice());
 		} catch (HotelException he) {
-			adventure.setState(State.UNDO);
+			getAdventure().setState(State.UNDO);
 			return;
 		} catch (RemoteAccessException rae) {
 			incNumOfRemoteErrors();
 			if (getNumOfRemoteErrors() == MAX_REMOTE_ERRORS) {
-				adventure.setState(State.UNDO);
+				getAdventure().setState(State.UNDO);
 			}
 			return;
 		}
-		
-		if (adventure.isRentVehicle()){
-		  	adventure.setState(State.RENT_VEHICLE);
-		}else { 
-			adventure.setState(State.PROCESS_PAYMENT);			
-		}
 
+		if (getAdventure().shouldRentVehicle()) {
+			getAdventure().setState(State.RENT_VEHICLE);
+		} else {
+			getAdventure().setState(State.PROCESS_PAYMENT);
+		}
 	}
 
 }

@@ -1,25 +1,36 @@
 package pt.ulisboa.tecnico.softeng.hotel.domain;
 
 import org.joda.time.LocalDate;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import mockit.Mocked;
+import mockit.integration.junit4.JMockit;
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
+import pt.ulisboa.tecnico.softeng.hotel.interfaces.BankInterface;
+import pt.ulisboa.tecnico.softeng.hotel.interfaces.TaxInterface;
 
-public class BookingConflictMethodTest {
+@RunWith(JMockit.class)
+public class BookingConflictMethodTest extends RollbackTestAbstractClass {
 	private final LocalDate arrival = new LocalDate(2016, 12, 19);
 	private final LocalDate departure = new LocalDate(2016, 12, 24);
 	private Booking booking;
-	private final double price1 = 124.5;
-	private final double price2 = 224.5;
+	private final String NIF_HOTEL = "123456700";
+	private final String NIF_BUYER = "123456789";
+	private final String IBAN_BUYER = "IBAN_BUYER";
 
-	@Before
-	public void setUp() {
-		Hotel hotel = new Hotel("XPTO123", "Londres", "NIF", "IBAN", price1, price2);
+	@Mocked
+	private TaxInterface taxInterface;
+	@Mocked
+	private BankInterface bankInterface;
 
-		this.booking = new Booking(hotel, this.arrival, this.departure, "NIF", "IBAN", 123.4);
+	@Override
+	public void populate4Test() {
+		Hotel hotel = new Hotel("XPTO123", "Londres", this.NIF_HOTEL, "IBAN", 20.0, 30.0);
+		Room room = new Room(hotel, "01", Room.Type.SINGLE);
+
+		this.booking = new Booking(room, this.arrival, this.departure, this.NIF_BUYER, this.IBAN_BUYER);
 	}
 
 	@Test
@@ -86,11 +97,6 @@ public class BookingConflictMethodTest {
 	@Test
 	public void arrivalIsBetweenBookedAndDepartureIsAfterBookedDeparture() {
 		Assert.assertTrue(this.booking.conflict(this.arrival.plusDays(3), this.departure.plusDays(6)));
-	}
-
-	@After
-	public void tearDown() {
-		Hotel.hotels.clear();
 	}
 
 }

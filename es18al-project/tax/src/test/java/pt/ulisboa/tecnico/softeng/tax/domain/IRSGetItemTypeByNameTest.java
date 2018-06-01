@@ -8,18 +8,21 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class IRSGetItemTypeByNameTest {
+import pt.ist.fenixframework.FenixFramework;
+import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
+
+public class IRSGetItemTypeByNameTest extends RollbackTestAbstractClass {
 	private static final String FOOD = "FOOD";
 	private static final int VALUE = 16;
 
 	private IRS irs;
 
-	@Before
-	public void setUp() {
-		this.irs = IRS.getIRS();
+	@Override
+	public void populate4Test() {
+		this.irs = new IRS();
 		new ItemType(this.irs, FOOD, VALUE);
 	}
-
+	
 	@Test
 	public void success() {
 		ItemType itemType = this.irs.getItemTypeByName(FOOD);
@@ -28,29 +31,29 @@ public class IRSGetItemTypeByNameTest {
 		assertEquals(FOOD, itemType.getName());
 	}
 
-	@Test
+	@Test(expected = TaxException.class)
 	public void nullName() {
 		ItemType itemType = this.irs.getItemTypeByName(null);
 
 		assertNull(itemType);
 	}
 
-	@Test
+	@Test (expected = TaxException.class)
 	public void emptyName() {
 		ItemType itemType = this.irs.getItemTypeByName("");
 
 		assertNull(itemType);
 	}
 
-	@Test
+	@Test 
 	public void doesNotExistName() {
 		ItemType itemType = this.irs.getItemTypeByName("CAR");
 
 		assertNull(itemType);
 	}
 
-	@After
+	/*@After
 	public void tearDown() {
 		this.irs.clearAll();
-	}
+	}*/
 }

@@ -1,16 +1,18 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.joda.time.LocalDate;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.dataobjects.InvoiceData;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
-public class IRSSubmitInvoiceTest {
+public class IRSSubmitInvoiceTest  extends RollbackTestAbstractClass  {
 	private static final String SELLER_NIF = "123456789";
 	private static final String BUYER_NIF = "987654321";
 	private static final String FOOD = "FOOD";
@@ -18,13 +20,28 @@ public class IRSSubmitInvoiceTest {
 	private final LocalDate date = new LocalDate(2018, 02, 13);
 
 	private IRS irs;
+	
+	@Override
+	public void populate4Test() {
+		this.irs = new IRS();
+		Buyer buyer = new Buyer();
+		buyer.setIrs(this.irs);
+		buyer.setAddress( "Anywhere");
+		buyer.setName("Manuel Comprado");
+		buyer.setNIF(BUYER_NIF);
+		
+		Seller seller = new Seller();
+		seller.setIrs(this.irs);
+		seller.setAddress("Somewhere");
+		seller.setName("José Vendido");
+		seller.setNIF(SELLER_NIF);
+		
+		ItemType itemType = new ItemType(irs, FOOD, VALUE);
+		
+		this.irs.addTaxPayer(buyer);
+		this.irs.addTaxPayer(seller);
 
-	@Before
-	public void setUp() {
-		this.irs = IRS.getIRS();
-		new Seller(this.irs, SELLER_NIF, "José Vendido", "Somewhere");
-		new Buyer(this.irs, BUYER_NIF, "Manuel Comprado", "Anywhere");
-		new ItemType(this.irs, FOOD, VALUE);
+		this.irs.addItemType(itemType);
 	}
 
 	@Test
@@ -69,6 +86,7 @@ public class IRSSubmitInvoiceTest {
 	@Test(expected = TaxException.class)
 	public void nullItemType() {
 		InvoiceData invoiceData = new InvoiceData(SELLER_NIF, BUYER_NIF, null, VALUE, this.date);
+		//assertNull(this.irs.submitInvoice(invoiceData));
 		this.irs.submitInvoice(invoiceData);
 	}
 
@@ -102,13 +120,10 @@ public class IRSSubmitInvoiceTest {
 		this.irs.submitInvoice(invoiceData);
 	}
 
+	@Test
 	public void equal1970() {
 		InvoiceData invoiceData = new InvoiceData(SELLER_NIF, BUYER_NIF, FOOD, VALUE, new LocalDate(1970, 01, 01));
 		this.irs.submitInvoice(invoiceData);
 	}
 
-	@After
-	public void tearDown() {
-		this.irs.clearAll();
-	}
 }

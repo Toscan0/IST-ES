@@ -8,17 +8,29 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class IRSGetTaxPayerByNIFTest {
+import pt.ist.fenixframework.FenixFramework;
+import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
+
+public class IRSGetTaxPayerByNIFTest extends RollbackTestAbstractClass  {
 	private static final String SELLER_NIF = "123456789";
 	private static final String BUYER_NIF = "987654321";
 
 	private IRS irs;
 
-	@Before
-	public void setUp() {
-		this.irs = IRS.getIRS();
-		new Seller(this.irs, SELLER_NIF, "José Vendido", "Somewhere");
-		new Buyer(this.irs, BUYER_NIF, "Manuel Comprado", "Anywhere");
+	@Override
+	public void populate4Test() {
+		this.irs = new IRS();
+		Buyer buyer = new Buyer();
+		buyer.setIrs(this.irs);
+		buyer.setAddress( "Anywhere");
+		buyer.setName("Manuel Comprado");
+		buyer.setNIF(BUYER_NIF);
+		
+		Seller seller = new Seller();
+		seller.setIrs(this.irs);
+		seller.setAddress("Somewhere");
+		seller.setName("José Vendido");
+		seller.setNIF(SELLER_NIF);
 	}
 
 	@Test
@@ -37,29 +49,29 @@ public class IRSGetTaxPayerByNIFTest {
 		assertEquals(SELLER_NIF, taxPayer.getNIF());
 	}
 
-	@Test
+	@Test (expected = TaxException.class)
 	public void nullNIF() {
 		TaxPayer taxPayer = this.irs.getTaxPayerByNIF(null);
 
 		assertNull(taxPayer);
 	}
 
-	@Test
+	@Test (expected = TaxException.class)
 	public void emptyNIF() {
 		TaxPayer taxPayer = this.irs.getTaxPayerByNIF("");
 
 		assertNull(taxPayer);
 	}
 
-	@Test
+	@Test 
 	public void doesNotExist() {
 		TaxPayer taxPayer = this.irs.getTaxPayerByNIF("122456789");
 
 		assertNull(taxPayer);
 	}
 
-	@After
+	/*@After
 	public void tearDown() {
 		this.irs.clearAll();
-	}
+	}*/
 }
