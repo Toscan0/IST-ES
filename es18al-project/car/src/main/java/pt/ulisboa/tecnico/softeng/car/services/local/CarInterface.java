@@ -1,6 +1,5 @@
 package pt.ulisboa.tecnico.softeng.car.services.local;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,28 +40,9 @@ public class CarInterface {
 		return null;
 	}
 	
-	@Atomic(mode = TxMode.READ)
 	private static RentACar getRentACarByCode(String code) {
 		return FenixFramework.getDomainRoot().getRentACarSet().stream().filter(r -> r.getCode().equals(code)).findFirst()
 			.orElse(null);	
-	}
-	
-	@Atomic(mode = TxMode.WRITE)
-	public static void createVehicle(VehicleData vehicleData, String code) {
-		//new Vehicle(vehicleData.getPlate(), vehicleData.getKilometers(), vehicleData.getPrice(), getRentACarByCode(code));
-	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static List<VehicleData> getVehicles(String code) {
-		List<VehicleData> vehicles = new ArrayList<>();
-		for (RentACar rent : FenixFramework.getDomainRoot().getRentACarSet()) {
-			if (rent.getCode().equals(code)) {
-				for (Vehicle vehicle : rent.getVehicleSet()) {
-					vehicles.add(new VehicleData(vehicle));
-				}
-			}
-		}
-		return vehicles;
 	}
 	
 	
