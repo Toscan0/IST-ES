@@ -15,7 +15,6 @@ public class ActivityOffer extends ActivityOffer_Base {
 		setAmount(amount);
 
 		setActivity(activity);
-		setReference(activity.getActivityProvider().getCode() + Integer.toString(activity.getActivityProvider().getCounter()));
 	}
 
 	public void delete() {
@@ -80,6 +79,14 @@ public class ActivityOffer extends ActivityOffer_Base {
 			}
 		}
 		return null;
+	}
+
+	public Booking book(ActivityProvider provider, ActivityOffer activityOffer, int age, String nif, String iban,
+			String adventureId) {
+		Booking booking = new Booking(provider, activityOffer, age, nif, iban);
+		booking.setAdventureId(adventureId);
+		provider.getProcessor().submitBooking(booking);
+		return booking;
 	}
 
 }

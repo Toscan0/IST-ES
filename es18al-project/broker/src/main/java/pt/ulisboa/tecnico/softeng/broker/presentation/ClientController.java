@@ -38,12 +38,10 @@ public class ClientController {
 		}
 	}
 
-	
 	@RequestMapping(method = RequestMethod.POST)
-	public String submitClient(Model model, @PathVariable String brokerCode,
-			@ModelAttribute ClientData clientData) {
-		logger.info("clientSubmit brokerCode:{}, iban:{}, nif:{}, drivingLicense:{}, age:{}", brokerCode,
-				clientData.getIban(), clientData.getNif(), clientData.getDrivingLicense(), clientData.getAge());
+	public String submitClient(Model model, @PathVariable String brokerCode, @ModelAttribute ClientData clientData) {
+		logger.info("submitClient brokerCode:{}, age:{}, nif:{}, iban:{}, drivingLicense:{}", brokerCode,
+				clientData.getAge(), clientData.getNif(), clientData.getIban(), clientData.getDrivingLicense());
 
 		try {
 			BrokerInterface.createClient(brokerCode, clientData);

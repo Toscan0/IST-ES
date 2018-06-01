@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-<title>Clients</title>
+<title>Adventures</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
 <link rel="stylesheet"
@@ -13,41 +13,46 @@
 <body>
 	<div class="container">
 		<h2>
-			Welcome to Broker <span th:text="${broker.name}">Name</span> Clients
+			Welcome to Broker <span th:text="${broker.name}">Rage in the
+				Snow</span> Clients
 		</h2>
 		<a class="btn btn-default pull-right" th:href="@{/brokers}">Brokers</a>
-		<br/>
+		<br />
 		<h3>Create Client</h3>
 		<p class="text-danger" th:text="${error}">Error</p>
-		<form class="form-inline" th:action="@{/brokers/{code}/clients(code=${broker.code})}" th:object="${client}" method="post">
-	 		<label>IBAN: </label> <input class="form-control" type="text" th:field="*{iban}" /> 
-			<label>NIF: </label> <input class="form-control" type="text" th:field="*{nif}" />  
-			<label>Driving License: </label> <input class="form-control" type="text" th:field="*{drivingLicense}" /> 
-			<label>Age: </label> <input class="form-control" type="number" th:field="*{age}" /> 
-			<input class="btn btn-primary" type="submit" value="Submit" />
+		<form class="form-inline"
+			th:action="@{/brokers/{code}/clients(code=${broker.code})}"
+			th:object="${client}" method="post">
+			<label>NIF: </label> <input class="form-control input-sm" type="text"
+				size="9" th:field="*{nif}" /> <label>IBAN: </label> <input
+				class="form-control input-sm" type="text" size="20"
+				th:field="*{iban}" /> <label>Age: </label> <input
+				class="form-control input-sm" type="number" min="1" max="120"
+				th:field="*{age}" /> <label>Driving License: </label> <input
+				class="form-control input-sm" type="text"
+				th:field="*{drivingLicense}" /> <input
+				class="btn btn-primary input-sm" type="submit" value="Submit" />
 		</form>
-		<br/>
+		<br />
 		<h3>Clients</h3>
- 		<table class="table table-striped">
+		<table class="table table-striped">
 			<thead>
 				<tr>
+					<th>NIF</th>
 					<th>IBAN</th>
- 					<th>NIF</th>
-					<th>Driving License</th>
 					<th>Age</th>
-					<th>Adventures</th>
+					<th>Driving License</th>
+					<th>Link</th>
 				</tr>
 			</thead>
 			<tbody>
 				<tr th:each="client: ${broker.clients}">
-					<td th:text="${client.iban}">iban</td>
- 					<td th:text="${client.nif}">nif</td>
-					<td th:text="${client.drivingLicense}">driving license</td>
-					<td th:text="${client.age}">age</td>
-					<td><a
-						th:href="@{/brokers/{code}/clients/{iban}/adventures(code=${broker.code}, iban=${client.iban})}">Link</a></td>
+					<td th:text="${client.nif}">1234567789</td>
+					<td th:text="${client.iban}">IBAN 7338498 785893</td>
+					<td th:text="${client.age}">35</td>
+					<td th:text="${client.drivingLicense}">PT678988890</td>
+					<td><a th:href="@{/brokers/{code}/clients/{nif}/adventures(code=${broker.code}, nif=${client.nif})}">Link</a></td>
 				</tr>
-				
 			</tbody>
 		</table>
 	</div>

@@ -1,11 +1,11 @@
 package pt.ulisboa.tecnico.softeng.tax.services.local;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import pt.ist.fenixframework.Atomic;
+import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.domain.Buyer;
 import pt.ulisboa.tecnico.softeng.tax.domain.IRS;
@@ -13,147 +13,137 @@ import pt.ulisboa.tecnico.softeng.tax.domain.Invoice;
 import pt.ulisboa.tecnico.softeng.tax.domain.ItemType;
 import pt.ulisboa.tecnico.softeng.tax.domain.Seller;
 import pt.ulisboa.tecnico.softeng.tax.domain.TaxPayer;
-import pt.ulisboa.tecnico.softeng.tax.services.local.dataobjects.BuyerData;
+import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 import pt.ulisboa.tecnico.softeng.tax.services.local.dataobjects.InvoiceData;
 import pt.ulisboa.tecnico.softeng.tax.services.local.dataobjects.ItemTypeData;
-import pt.ulisboa.tecnico.softeng.tax.services.local.dataobjects.ReturnData;
-import pt.ulisboa.tecnico.softeng.tax.services.local.dataobjects.SellerData;
-import pt.ist.fenixframework.Atomic.TxMode;
+import pt.ulisboa.tecnico.softeng.tax.services.local.dataobjects.TaxPayerData;
+import pt.ulisboa.tecnico.softeng.tax.services.local.dataobjects.TaxPayerData.Type;
+import pt.ulisboa.tecnico.softeng.tax.services.remote.dataobjects.RestInvoiceData;
 
 public class TaxInterface {
-	
-	@Atomic(mode = TxMode.READ)
-	public static List<BuyerData> getBuyers() {
-		List<BuyerData> buyers = new ArrayList<>();
-		Set<TaxPayer> payers = getirs().getTaxPayerSet();
-		for (TaxPayer payer : payers) {
-			if (payer instanceof Buyer) {
-				BuyerData buyer = new BuyerData((Buyer)payer);
-				buyers.add(buyer);
-			}
-		}
-		return buyers;
-	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static BuyerData getBuyerbyNif(String nif) {
-		TaxPayer payer = getirs().getTaxPayerByNIF(nif);
-		if (payer instanceof Buyer && payer.getNif().equals(nif)) {
-			BuyerData buyer = new BuyerData((Buyer)payer);
-			return buyer;
-		}
-		else return null;
-	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static List<SellerData> getSellers() {
-		List<SellerData> sellers = new ArrayList<>();
-		Set<TaxPayer> payers = getirs().getTaxPayerSet();
-		for (TaxPayer payer : payers) {
-			if (payer instanceof Seller) {
-				SellerData seller = new SellerData((Seller)payer);
-				sellers.add(seller);
-			}
-		}
-		return sellers;
-	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static SellerData getSellerbyNif(String nif) {
-		TaxPayer payer = getirs().getTaxPayerByNIF(nif);
-		if (payer instanceof Seller && payer.getNif().equals(nif)) {
-			SellerData seller = new SellerData((Seller)payer);
-			return seller;
-		}
-		else return null;
-	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static List<ItemTypeData> getItemTypes() {
-		List<ItemTypeData> itemtypes = new ArrayList<>();
-		for (ItemType item : getirs().getItemTypeSet()) {
-			itemtypes.add(new ItemTypeData(item));
-		}
-		return itemtypes;
-	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static ItemType getItemTypebyName(String name) {
-		for (ItemType item : getirs().getItemTypeSet()) {
-			if (item.getName() == name)
-				return item;
-		}
-		return null;
-	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static List<InvoiceData> getInvoices() {
-		List<InvoiceData> invoices = new ArrayList<>();
-		for (Invoice invoice : getirs().getInvoiceSet()) {
-			invoices.add(new InvoiceData(invoice.getSeller().getNif(), invoice.getBuyer().getNif(),
-					invoice.getItemType().getName(), invoice.getValue(), invoice.getDate()));
-		}
-		return invoices;
-	}
-	
-	@Atomic(mode = TxMode.WRITE)
-	public static void createBuyer(BuyerData buyerData) {
-		new Buyer(getirs(),buyerData.getNIF(), buyerData.getName(), buyerData.getAdress());
-	}
-	
-	@Atomic(mode = TxMode.WRITE)
-	public static void createSeller(SellerData sellerData) {
-		new Seller(getirs(),sellerData.getNIF(), sellerData.getName(), sellerData.getAdress());
-	}
-	
-	@Atomic(mode = TxMode.WRITE)
-	public static void createItemType(ItemTypeData itemtypeData) {
-		new ItemType(getirs(),itemtypeData.getName(), itemtypeData.getTax());
-	}
-	
-	@Atomic(mode = TxMode.WRITE)
-	public static void createInvoice(InvoiceData invoicedata) {
-		IRS.submitInvoice(invoicedata);
 
-	}
-	
-	@Atomic(mode = TxMode.SPECULATIVE_READ)
-	public static IRS getirs() {
-		return IRS.getIRSInstance();
-	}
-	
 	@Atomic(mode = TxMode.READ)
-	public static List<ReturnData> getBuyersReturn(String nif) {
-		List<ReturnData> returns = new ArrayList<ReturnData>();
-		Double amount;
-		TaxPayer payer = getirs().getTaxPayerByNIF(nif);
-		if (payer instanceof Buyer) {
-			for (int i = 1970; i<= LocalDateTime.now().getYear(); i++) {
-				amount = 0.0;
-				amount = ((Buyer) payer).taxReturn(i);
-				if (amount.equals(0.0)) {}
-					//ignore
-				else returns.add(new ReturnData(i,amount));
-			}
-		}
-		return returns;
+	public static List<ItemTypeData> getItemTypeDataList() {
+		return IRS.getIRSInstance().getItemTypeSet().stream().map(i -> new ItemTypeData(i))
+				.sorted((i1, i2) -> i1.getName().compareTo(i2.getName())).collect(Collectors.toList());
 	}
-	
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void createItemType(ItemTypeData itemTypeData) {
+		new ItemType(IRS.getIRSInstance(), itemTypeData.getName(),
+				itemTypeData.getTax() != null ? itemTypeData.getTax() : -1);
+	}
+
 	@Atomic(mode = TxMode.READ)
-	public static List<ReturnData> getSellersPay(String nif) {
-		List<ReturnData> returns = new ArrayList<ReturnData>();
-		Double amount;
-		TaxPayer payer = getirs().getTaxPayerByNIF(nif);
-		if (payer instanceof Seller) {
-			for (int i = 1970; i<= LocalDateTime.now().getYear(); i++) {
-				amount = 0.0;
-				amount = ((Seller) payer).toPay(i);
-				if (amount.equals(0.0)) {}
-					//ignore
-				else returns.add(new ReturnData(i,amount));
-			}
-		}
-		return returns;
+	public static List<TaxPayerData> getTaxPayerDataList() {
+		return IRS.getIRSInstance().getTaxPayerSet().stream().map(i -> new TaxPayerData(i))
+				.sorted((i1, i2) -> i1.getNif().compareTo(i2.getNif())).collect(Collectors.toList());
 	}
-	
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void createTaxPayer(TaxPayerData taxPayerData) {
+		if (taxPayerData.getType().equals(Type.BUYER)) {
+			new Buyer(IRS.getIRSInstance(), taxPayerData.getNif(), taxPayerData.getName(), taxPayerData.getAddress());
+		} else {
+			new Seller(IRS.getIRSInstance(), taxPayerData.getNif(), taxPayerData.getName(), taxPayerData.getAddress());
+		}
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static TaxPayerData getTaxPayerDataByNif(String nif) {
+		TaxPayer taxPayer = IRS.getIRSInstance().getTaxPayerByNIF(nif);
+		return new TaxPayerData(taxPayer);
+	}
+
+	@Atomic(mode = TxMode.READ)
+	public static List<InvoiceData> getInvoiceDataList(String nif) {
+		TaxPayer taxPayer = IRS.getIRSInstance().getTaxPayerByNIF(nif);
+		if (taxPayer == null) {
+			throw new TaxException();
+		}
+
+		if (taxPayer instanceof Buyer) {
+			return ((Buyer) taxPayer).getInvoiceSet().stream().map(i -> new InvoiceData(i))
+					.sorted((i1, i2) -> i1.getSellerNif().compareTo(i2.getSellerNif())).collect(Collectors.toList());
+		} else {
+			return ((Seller) taxPayer).getInvoiceSet().stream().map(i -> new InvoiceData(i))
+					.sorted((i1, i2) -> i1.getBuyerNif().compareTo(i2.getBuyerNif())).collect(Collectors.toList());
+		}
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void createInvoice(String nif, InvoiceData invoiceData) {
+		if (invoiceData.getValue() == null || invoiceData.getItemType() == null || invoiceData.getDate() == null
+				|| invoiceData.getBuyerNif() == null && invoiceData.getSellerNif() == null
+						&& invoiceData.getTime() == null) {
+			throw new TaxException();
+		}
+
+		TaxPayer taxPayer = IRS.getIRSInstance().getTaxPayerByNIF(nif);
+		ItemType itemType = IRS.getIRSInstance().getItemTypeByName(invoiceData.getItemType());
+
+		Seller seller;
+		Buyer buyer;
+		if (invoiceData.getSellerNif() != null) {
+			seller = (Seller) IRS.getIRSInstance().getTaxPayerByNIF(invoiceData.getSellerNif());
+			buyer = (Buyer) taxPayer;
+		} else {
+			seller = (Seller) taxPayer;
+			buyer = (Buyer) IRS.getIRSInstance().getTaxPayerByNIF(invoiceData.getBuyerNif());
+		}
+
+		new Invoice(invoiceData.getValue(), invoiceData.getDate(), itemType, seller, buyer);
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static String submitInvoice(RestInvoiceData invoiceData) {
+		Invoice invoice = getInvoiceByInvoiceData(invoiceData);
+		if (invoice != null) {
+			return invoice.getReference();
+		}
+
+		Seller seller = (Seller) IRS.getIRSInstance().getTaxPayerByNIF(invoiceData.getSellerNif());
+		Buyer buyer = (Buyer) IRS.getIRSInstance().getTaxPayerByNIF(invoiceData.getBuyerNif());
+		ItemType itemType = IRS.getIRSInstance().getItemTypeByName(invoiceData.getItemType());
+
+		invoice = new Invoice(invoiceData.getValue(), invoiceData.getDate(), itemType, seller, buyer,
+				invoiceData.getTime());
+
+		return invoice.getReference();
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void cancelInvoice(String reference) {
+		Invoice invoice = getInvoiceByReference(reference);
+
+		if (invoice != null && invoice.getCancelled()) {
+			return;
+		}
+
+		invoice = IRS.getIRSInstance().getInvoiceSet().stream().filter(i -> i.getReference().equals(reference))
+				.findFirst().orElseThrow(() -> new TaxException());
+		invoice.cancel();
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void deleteIRS() {
+		FenixFramework.getDomainRoot().getIrs().delete();
+	}
+
+	private static Invoice getInvoiceByReference(String reference) {
+		return IRS.getIRSInstance().getInvoiceSet().stream().filter(i -> i.getReference().equals(reference)).findFirst()
+				.orElse(null);
+	}
+
+	private static Invoice getInvoiceByInvoiceData(RestInvoiceData invoiceData) {
+		Optional<Invoice> inOptional = IRS.getIRSInstance().getInvoiceSet().stream()
+				.filter(i -> i.getBuyer().getNif().equals(invoiceData.getBuyerNif())
+						&& i.getSeller().getNif().equals(invoiceData.getSellerNif())
+						&& i.getItemType().getName().equals(invoiceData.getItemType())
+						&& i.getValue() == invoiceData.getValue().doubleValue()
+						&& i.getTime().getMillis() == invoiceData.getTime().getMillis())
+				.findFirst();
+
+		return inOptional.orElse(null);
+	}
 }

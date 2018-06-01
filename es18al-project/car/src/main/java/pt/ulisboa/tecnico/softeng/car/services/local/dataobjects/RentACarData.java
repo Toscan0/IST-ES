@@ -1,55 +1,63 @@
 package pt.ulisboa.tecnico.softeng.car.services.local.dataobjects;
 
-import pt.ulisboa.tecnico.softeng.car.domain.RentACar;
+import org.joda.time.LocalDate;
+import pt.ulisboa.tecnico.softeng.car.domain.Renting;
 
 public class RentACarData {
-	
-	private String code;
-	private String name;
-	private String nif;
-	private String iban;
+    private String code;
+    private String name;
+    private String nif;
+    private String iban;
+    private Integer numVehicles;
 
-	public RentACarData () {}
-	
-	public RentACarData (RentACar rentACar) {
-		
-		this.code = rentACar.getCode();
-		this.name = rentACar.getName();
-		this.nif = rentACar.getNif();
-		this.iban = rentACar.getIban();
-	}
+    public RentACarData() {
+    }
 
-	public String getCode() {
-		return code;
-	}
+    public RentACarData(String code, String name, String nif, String iban, Integer numVehicles) {
+        this.code = code;
+        this.name = name;
+        this.nif = nif;
+        this.iban = iban;
+        this.numVehicles = numVehicles;
+    }
 
-	public void setCode(String code) {
-		this.code = code;
-	}
+    public Integer getNumVehicles() {
+        return numVehicles;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void setNumVehicles(int numVehicles) {
+        this.numVehicles = numVehicles;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getCode() {
+        return code;
+    }
 
-	public String getNif() {
-		return nif;
-	}
+    public void setCode(String code) {
+        this.code = code;
+    }
 
-	public void setNif(String nif) {
-		this.nif = nif;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public String getIban() {
-		return iban;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setIban(String iban) {
-		this.iban = iban;
-	}
-	
-	
+    public String getNif() {
+        return nif;
+    }
+
+    public void setNif(String nif) {
+        this.nif = nif;
+    }
+
+    public String getIban() {
+        return iban;
+    }
+
+    public void setIban(String iban) {
+        this.iban = iban;
+    }
 }

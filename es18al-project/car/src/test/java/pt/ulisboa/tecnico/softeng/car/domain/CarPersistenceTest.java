@@ -2,7 +2,6 @@ package pt.ulisboa.tecnico.softeng.car.domain;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 import java.util.ArrayList;
 
@@ -15,6 +14,7 @@ import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
 public class CarPersistenceTest {
+	private static final String ADVENTURE_ID = "AdventureId";
 	private static final String NAME1 = "eartz";
 	private static final String PLATE_CAR1 = "aa-00-11";
 	private static final String PLATE_CAR2 = "aa-00-12";
@@ -36,7 +36,7 @@ public class CarPersistenceTest {
 		RentACar rentACar = new RentACar(NAME1, NIF, IBAN);
 		Car car = new Car(PLATE_CAR1, 10, 10, rentACar);
 		Motorcycle motorcycle = new Motorcycle(PLATE_CAR2, 20, 5, rentACar);
-		car.rent(DRIVING_LICENSE, date1, date2, NIF, IBAN_BUYER);
+		car.rent(DRIVING_LICENSE, date1, date2, NIF, IBAN_BUYER, ADVENTURE_ID);
 	}
 
 	@Atomic(mode = TxMode.READ)
@@ -50,17 +50,17 @@ public class CarPersistenceTest {
 		assertEquals(NIF, rentACar.getNif());
 		assertEquals(IBAN, rentACar.getIban());
 		assertNotNull(processor);
-		assertEquals(0, processor.getRentingSet().size());
+		assertEquals(1, processor.getRentingSet().size());
 
 		for (Vehicle vehicle : rentACar.getVehicleSet()) {
 			if (vehicle instanceof Car) {
-				assertEquals(PLATE_CAR1, vehicle.getPlate());
-				assertEquals(10, vehicle.getKilometers());
+				assertEquals(PLATE_CAR1.toUpperCase(), vehicle.getPlate());
+				assertEquals(10, vehicle.getKilometers().intValue());
 				assertEquals(10, vehicle.getPrice(), 0);
 			}
 			if (vehicle instanceof Motorcycle) {
-				assertEquals(PLATE_CAR2, vehicle.getPlate());
-				assertEquals(20, vehicle.getKilometers());
+				assertEquals(PLATE_CAR2.toUpperCase(), vehicle.getPlate());
+				assertEquals(20, vehicle.getKilometers().intValue());
 				assertEquals(5, vehicle.getPrice(), 0);
 			}
 		}
@@ -74,7 +74,8 @@ public class CarPersistenceTest {
 				assertEquals(date2, renting.getEnd());
 				assertEquals(NIF, renting.getClientNif());
 				assertEquals(IBAN, renting.getClientIban());
-				assertNull(renting.getProcessor());
+				assertNotNull(renting.getTime());
+				assertNotNull(renting.getProcessor());
 			}
 			if (vehicle instanceof Motorcycle) {
 				assertEquals(0, vehicle.getRentingSet().size());

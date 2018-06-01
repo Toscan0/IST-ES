@@ -13,29 +13,32 @@ import pt.ulisboa.tecnico.softeng.tax.services.local.TaxInterface;
 import pt.ulisboa.tecnico.softeng.tax.services.local.dataobjects.ItemTypeData;
 
 @Controller
-@RequestMapping(value = "/itemtypes")
+@RequestMapping(value = "/tax/items")
 public class ItemTypeController {
 	private static Logger logger = LoggerFactory.getLogger(ItemTypeController.class);
 
 	@RequestMapping(method = RequestMethod.GET)
-	public String itemtypeForm(Model model) {
-		logger.info("itemtypeForm");
-		model.addAttribute("itemtype", new ItemTypeData());
-		model.addAttribute("itemtypes", TaxInterface.getItemTypes());
-		return "itemtypes";
+	public String itemTypeForm(Model model) {
+		logger.info("itemTypeForm");
+		model.addAttribute("item", new ItemTypeData());
+		model.addAttribute("items", TaxInterface.getItemTypeDataList());
+		return "itemsView";
 	}
-	
+
 	@RequestMapping(method = RequestMethod.POST)
-	public String itemtypeSubmit(Model model, @ModelAttribute ItemTypeData itemData) {
-		logger.info("itemtypeSubmit name:{}, tax:{}", itemData.getName(), itemData.getTax());
+	public String itemTypeSubmit(Model model, @ModelAttribute ItemTypeData itemTypeData) {
+		logger.info("itemTypeSubmit name:{}, tax:{}", itemTypeData.getName(), itemTypeData.getTax());
+
 		try {
-			TaxInterface.createItemType(itemData);
-		}catch(TaxException e) {
-			model.addAttribute("error", "Error: it was not possible to create the itemtype");
-			model.addAttribute("itemtype", itemData);
-			model.addAttribute("itemtypes", TaxInterface.getItemTypes());
+			TaxInterface.createItemType(itemTypeData);
+		} catch (TaxException be) {
+			model.addAttribute("error", "Error: it was not possible to create the item type " + itemTypeData.getName());
+			model.addAttribute("item", itemTypeData);
+			model.addAttribute("items", TaxInterface.getItemTypeDataList());
+			return "itemsView";
 		}
-		return "redirect:/itemtypes";
+
+		return "redirect:/tax/items";
 	}
-	
+
 }

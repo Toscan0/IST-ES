@@ -9,39 +9,41 @@ import org.springframework.format.annotation.DateTimeFormat;
 import pt.ulisboa.tecnico.softeng.broker.domain.BulkRoomBooking;
 
 public class BulkData {
+	private String id;
 	private Integer number;
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate arrival;
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate departure;
+	private String buyerNif;
+	private String buyerIban;
 	private int actualNumber;
 	private boolean cancelled;
 	private List<String> references;
-	private String buyerNif;
-	private String buyerIban;
-
-
-	public void setBuyerIban(String buyerIban) {
-		this.buyerIban = buyerIban;
-	}
 
 	public BulkData() {
 	}
 
 	public BulkData(BulkRoomBooking bulkRoomBooking) {
+		this.id = bulkRoomBooking.getId();
 		this.number = bulkRoomBooking.getNumber();
 		this.arrival = bulkRoomBooking.getArrival();
 		this.departure = bulkRoomBooking.getDeparture();
-		this.actualNumber = bulkRoomBooking.getReferenceSet().size();
-		this.cancelled = bulkRoomBooking.getCancelled();
 		this.buyerNif = bulkRoomBooking.getBuyerNif();
 		this.buyerIban = bulkRoomBooking.getBuyerIban();
+		this.actualNumber = bulkRoomBooking.getReferenceSet().size();
+		this.cancelled = bulkRoomBooking.getCancelled();
 
 		this.references = bulkRoomBooking.getReferenceSet().stream().map(r -> r.getValue())
 				.collect(Collectors.toList());
+	}
 
-		this.references.add("fjhkdsl");
-		this.references.add("jkfhglkfdsg");
+	public String getId() {
+		return this.id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public Integer getNumber() {
@@ -68,6 +70,22 @@ public class BulkData {
 		this.departure = departure;
 	}
 
+	public String getBuyerNif() {
+		return this.buyerNif;
+	}
+
+	public void setBuyerNif(String buyerNif) {
+		this.buyerNif = buyerNif;
+	}
+
+	public String getBuyerIban() {
+		return this.buyerIban;
+	}
+
+	public void setBuyerIban(String buyerIban) {
+		this.buyerIban = buyerIban;
+	}
+
 	public int getActualNumber() {
 		return this.actualNumber;
 	}
@@ -90,18 +108,6 @@ public class BulkData {
 
 	public void setReferences(List<String> references) {
 		this.references = references;
-	}
-
-	public String getBuyerNif() {
-		return buyerNif;
-	}
-
-	public void setBuyerNif(String buyerNif) {
-		this.buyerNif = buyerNif;
-	}
-
-	public String getBuyerIban() {
-		return buyerIban;
 	}
 
 }

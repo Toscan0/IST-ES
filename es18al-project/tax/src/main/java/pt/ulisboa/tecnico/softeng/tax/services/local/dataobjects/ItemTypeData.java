@@ -4,30 +4,30 @@ import pt.ulisboa.tecnico.softeng.tax.domain.ItemType;
 
 public class ItemTypeData {
 	private String name;
-	private int tax;
-	
-	public ItemTypeData() {}
-	
-	public ItemTypeData(ItemType item) {
-		this.name  = item.getName();
-		this.tax = item.getTax();
+	private Integer tax;
+
+	public ItemTypeData() {
+	}
+
+	public ItemTypeData(ItemType itemType) {
+		this.name = itemType.getName();
+		this.tax = itemType.getTax();
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public void setName(String name) {
 		this.name = name;
 	}
 
-	public int getTax() {
-		return tax;
+	public Integer getTax() {
+		return this.tax;
 	}
 
-	public void setTax(int tax) {
+	public void setTax(Integer tax) {
 		this.tax = tax;
 	}
-	
-	
+
 }

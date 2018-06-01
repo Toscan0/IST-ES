@@ -3,6 +3,8 @@ package pt.ulisboa.tecnico.softeng.car.domain;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.car.exception.CarException;
 
 public abstract class Vehicle extends Vehicle_Base {
@@ -10,7 +12,12 @@ public abstract class Vehicle extends Vehicle_Base {
 
 	protected static String plateFormat = "..-..-..";
 
-	protected Vehicle() { }
+	public static enum Type {
+		CAR, MOTORCYCLE
+	}
+
+	protected Vehicle() {
+	}
 
 	public Vehicle(String plate, int kilometers, double price, RentACar rentACar) {
 		logger.debug("Vehicle plate: {}", plate);
@@ -19,31 +26,34 @@ public abstract class Vehicle extends Vehicle_Base {
 		setPlate(plate.toUpperCase());
 		setKilometers(kilometers);
 		setPrice(price);
-        setRentACar(rentACar);
+		setRentACar(rentACar);
 		rentACar.addVehicle(this);
 	}
 
-    public void delete() {
-        setRentACar(null);
+	public void delete() {
+		setRentACar(null);
 
-        for (Renting renting: getRentingSet()) {
-            renting.delete();
-        }
+		for (Renting renting : getRentingSet()) {
+			renting.delete();
+		}
 
-        deleteDomainObject();
-    }
+		deleteDomainObject();
+	}
 
 	protected void checkArguments(String plate, int kilometers, RentACar rentACar) {
-		if (rentACar == null || plate == null ||
-                !plate.matches(plateFormat) ||
-                rentACar.getVehicleSet().stream().anyMatch(vehicle -> vehicle.getPlate().equals(plate.toUpperCase()))) {
+		if (rentACar == null || plate == null || !plate.matches(plateFormat)) {
 			throw new CarException();
 		} else if (kilometers < 0) {
 			throw new CarException();
-		} 
+		}
+
+		for (RentACar r : FenixFramework.getDomainRoot().getRentACarSet()) {
+			if (r.getVehicleSet().stream().anyMatch(vehicle -> vehicle.getPlate().equals(plate.toUpperCase()))) {
+				throw new CarException();
+			}
+
+		}
 	}
-
-
 
 	/**
 	 * @param kilometers
@@ -75,12 +85,10 @@ public abstract class Vehicle extends Vehicle_Base {
 	 * @return Renting with the given reference
 	 */
 	public Renting getRenting(String reference) {
-		return this.getRentingSet()
-				.stream()
+		return this.getRentingSet().stream()
 				.filter(renting -> renting.getReference().equals(reference)
-                        || renting.isCancelled() && renting.getCancellationReference().equals(reference))
-				.findFirst()
-				.orElse(null);
+						|| renting.isCancelled() && renting.getCancellationReference().equals(reference))
+				.findFirst().orElse(null);
 	}
 
 	/**
@@ -89,17 +97,18 @@ public abstract class Vehicle extends Vehicle_Base {
 	 * @param end
 	 * @return
 	 */
-	public Renting rent(String drivingLicense, LocalDate begin, LocalDate end, String buyerNIF, String buyerIBAN) {
+	public Renting rent(String drivingLicense, LocalDate begin, LocalDate end, String buyerNIF, String buyerIBAN,
+			String adventureId) {
 		if (!isFree(begin, end)) {
 			throw new CarException();
 		}
 
 		Renting renting = new Renting(drivingLicense, begin, end, this, buyerNIF, buyerIBAN);
 		this.addRenting(renting);
+		renting.setAdventureId(adventureId);
 
-        this.getRentACar().getProcessor().submitRenting(renting);
+		this.getRentACar().getProcessor().submitRenting(renting);
 
-
-        return renting;
+		return renting;
 	}
 }

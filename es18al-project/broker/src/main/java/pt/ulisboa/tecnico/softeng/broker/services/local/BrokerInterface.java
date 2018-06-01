@@ -26,17 +26,6 @@ public class BrokerInterface {
 		}
 		return brokers;
 	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static List<ClientData> getClients() {
-		List<ClientData> clients = new ArrayList<>();
-		for (Broker broker : FenixFramework.getDomainRoot().getBrokerSet()) {
-			for (Client client : broker.getClient()) {
-				clients.add(new ClientData(client));
-			}
-		}
-		return clients;
-	}
 
 	@Atomic(mode = TxMode.WRITE)
 	public static void createBroker(BrokerData brokerData) {
@@ -45,7 +34,7 @@ public class BrokerInterface {
 	}
 
 	@Atomic(mode = TxMode.READ)
-	public static BrokerData getBrokerDataByCode(String brokerCode,CopyDepth depth) {
+	public static BrokerData getBrokerDataByCode(String brokerCode, CopyDepth depth) {
 		Broker broker = getBrokerByCode(brokerCode);
 
 		if (broker != null) {
@@ -54,75 +43,72 @@ public class BrokerInterface {
 			return null;
 		}
 	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static BrokerData getBrokerDataByCodeIban(String brokerCode, String iban, CopyDepth depth) {
-		Broker broker = getBrokerByCodeIban(brokerCode, iban);
 
-		if (broker != null) {
-			return new BrokerData(broker, depth);
-		} else {
+	@Atomic(mode = TxMode.READ)
+	public static ClientData getClientDataByBrokerCodeAndNif(String brokerCode, String clientNif) {
+		Broker broker = getBrokerByCode(brokerCode);
+		if (broker == null) {
 			return null;
 		}
-	}
-	
-	@Atomic(mode = TxMode.READ)
-	public static ClientData getClientDataByIban(String iban, CopyDepth depth) {
-		Client client = getClientByIban(iban);
 
-		if (client != null) {
-			return new ClientData(client);
-		} else {
+		Client client = broker.getClientByNIF(clientNif);
+		if (client == null) {
 			return null;
 		}
+
+		return new ClientData(client);
 	}
 
-
-
-	@Atomic(mode = TxMode.WRITE)
-	public static void createAdventure(String brokerCode, String iban, AdventureData adventureData) {
-		// TODO: receive client and margin
-		new Adventure(getBrokerByCode(brokerCode),  adventureData.getBegin(), adventureData.getEnd(), null, 0.1);
-	}
-	
 	@Atomic(mode = TxMode.WRITE)
 	public static void createClient(String brokerCode, ClientData clientData) {
-		// TODO: receive client and margin
-		new Client(getBrokerByCode(brokerCode), clientData.getIban(), clientData.getNif(), clientData.getDrivingLicense(), clientData.getAge());
+		new Client(getBrokerByCode(brokerCode), clientData.getIban(), clientData.getNif(),
+				clientData.getDrivingLicense(), clientData.getAge() != null ? clientData.getAge() : 0);
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void createAdventure(String brokerCode, String clientNif, AdventureData adventureData) {
+		Broker broker = getBrokerByCode(brokerCode);
+		Client client = broker.getClientByNIF(clientNif);
+		new Adventure(broker, adventureData.getBegin(), adventureData.getEnd(), client,
+				adventureData.getMargin() != null ? adventureData.getMargin() : -1, adventureData.getVehicle());
 	}
 
 	@Atomic(mode = TxMode.WRITE)
 	public static void createBulkRoomBooking(String brokerCode, BulkData bulkData) {
-		// TODO: receive nif and iban
 		new BulkRoomBooking(getBrokerByCode(brokerCode), bulkData.getNumber() != null ? bulkData.getNumber() : 0,
-				bulkData.getArrival(), bulkData.getDeparture(), "ERROR", "ERROR");
+				bulkData.getArrival(), bulkData.getDeparture(), bulkData.getBuyerNif(), bulkData.getBuyerIban());
 
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void processAdventure(String brokerCode, String id) {
+		Adventure adventure = FenixFramework.getDomainRoot().getBrokerSet().stream()
+				.filter(b -> b.getCode().equals(brokerCode)).flatMap(b -> b.getAdventureSet().stream())
+				.filter(a -> a.getID().equals(id)).findFirst().orElse(null);
+
+		adventure.process();
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void processBulk(String brokerCode, String bulkId) {
+		BulkRoomBooking bulkRoomBooking = FenixFramework.getDomainRoot().getBrokerSet().stream()
+				.filter(b -> b.getCode().equals(brokerCode)).flatMap(b -> b.getRoomBulkBookingSet().stream())
+				.filter(r -> r.getId().equals(bulkId)).findFirst().orElse(null);
+
+		bulkRoomBooking.processBooking();
+	}
+
+	@Atomic(mode = TxMode.WRITE)
+	public static void deleteBrokers() {
+		for (Broker broker : FenixFramework.getDomainRoot().getBrokerSet()) {
+			broker.delete();
+		}
 	}
 
 	private static Broker getBrokerByCode(String code) {
 		for (Broker broker : FenixFramework.getDomainRoot().getBrokerSet()) {
 			if (broker.getCode().equals(code)) {
 				return broker;
-			}
-		}
-		return null;
-	}
-	private static Broker getBrokerByCodeIban(String code, String iban) {
-		for (Broker broker : FenixFramework.getDomainRoot().getBrokerSet()) {
-			if (broker.getCode().equals(code) && broker.getClientByNIF(iban)!=null) {
-				return broker;
-			}
-		}
-		return null;
-	}
-	
-	@SuppressWarnings("deprecation")
-	private static Client getClientByIban(String iban) {
-		for (Broker broker : FenixFramework.getDomainRoot().getBrokerSet()) {
-			for (Client client : broker.getClient()) {
-				if (client.getIban().equals(iban)) {
-					return client;
-				}
 			}
 		}
 		return null;
