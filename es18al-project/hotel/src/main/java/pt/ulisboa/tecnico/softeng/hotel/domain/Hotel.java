@@ -6,6 +6,7 @@ import java.util.Set;
 import org.joda.time.LocalDate;
 
 import pt.ulisboa.tecnico.softeng.hotel.dataobjects.RoomBookingData;
+import pt.ulisboa.tecnico.softeng.hotel.domain.Room.Type;
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
 public class Hotel {
@@ -15,18 +16,29 @@ public class Hotel {
 
 	private final String code;
 	private final String name;
+	private final String nif;
+	private final String iban;
+	private final double singlePrice;
+	private final double doublePrice;
 	private final Set<Room> rooms = new HashSet<>();
+	
+	private final Processor processor = new Processor();
 
-	public Hotel(String code, String name) {
-		checkArguments(code, name);
+	public Hotel(String code, String name, String nif, String iban, double singlePrice, double doublePrice) {
+		checkArguments(code, name, nif, iban, singlePrice, doublePrice);
 
 		this.code = code;
 		this.name = name;
+		this.nif = nif;
+		this.iban = iban;
+		this.singlePrice = singlePrice;
+		this.doublePrice = doublePrice;
 		Hotel.hotels.add(this);
 	}
 
-	private void checkArguments(String code, String name) {
-		if (code == null || name == null || code.trim().length() == 0 || name.trim().length() == 0) {
+	private void checkArguments(String code, String name, String nif, String iban, double price1, double price2) {
+		if (code == null || name == null || code.trim().length() == 0 || name.trim().length() == 0 || nif == null
+				|| nif.trim().length() == 0 || iban == null || iban.trim().length() == 0 || price1 <= 0 || price2 <= 0) {
 			throw new HotelException();
 		}
 
@@ -39,6 +51,27 @@ public class Hotel {
 				throw new HotelException();
 			}
 		}
+
+		for (Hotel hotel : hotels) {
+			if (hotel.getNif().equals(nif)) {
+				throw new HotelException();
+			}
+		}
+	}
+
+	public String getNif() {
+		return nif;
+	}
+
+	public String getIban() {
+		return iban;
+	}
+	
+	public double getPrice(Room.Type type) {
+		if (type == Type.SINGLE) {
+			return this.singlePrice;
+		}
+		else return this.doublePrice;
 	}
 
 	public Room hasVacancy(Room.Type type, LocalDate arrival, LocalDate departure) {
@@ -60,6 +93,10 @@ public class Hotel {
 
 	public String getName() {
 		return this.name;
+	}
+	
+	public Processor getProcessor() {
+		return this.processor;
 	}
 
 	void addRoom(Room room) {
@@ -93,11 +130,13 @@ public class Hotel {
 		return null;
 	}
 
-	public static String reserveRoom(Room.Type type, LocalDate arrival, LocalDate departure) {
+	public static String reserveRoom(Room.Type type, LocalDate arrival, LocalDate departure, String buyerNif, String buyerIban) {
 		for (Hotel hotel : Hotel.hotels) {
 			Room room = hotel.hasVacancy(type, arrival, departure);
 			if (room != null) {
-				return room.reserve(type, arrival, departure).getReference();
+				Booking booking = room.reserve(type, arrival, departure, buyerNif, buyerIban);
+				hotel.getProcessor().submitBooking(booking);
+				return booking.getReference();
 			}
 		}
 		throw new HotelException();
@@ -125,7 +164,7 @@ public class Hotel {
 		throw new HotelException();
 	}
 
-	public static Set<String> bulkBooking(int number, LocalDate arrival, LocalDate departure) {
+	public static Set<String> bulkBooking(int number, LocalDate arrival, LocalDate departure, String buyerNif, String buyerIban) {
 		if (number < 1) {
 			throw new HotelException();
 		}
@@ -134,10 +173,13 @@ public class Hotel {
 		if (rooms.size() < number) {
 			throw new HotelException();
 		}
+		
+		if(buyerNif == null || buyerIban == null)
+			throw new HotelException();
 
 		Set<String> references = new HashSet<>();
 		for (Room room : rooms) {
-			references.add(room.reserve(room.getType(), arrival, departure).getReference());
+			references.add(room.reserve(room.getType(), arrival, departure, buyerNif, buyerIban).getReference());
 		}
 
 		return references;
@@ -158,4 +200,7 @@ public class Hotel {
 		return rooms;
 	}
 
+    public void removeRooms() {
+        rooms.clear();
+    }
 }

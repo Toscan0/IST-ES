@@ -16,16 +16,35 @@ public class Broker {
 
 	private final String code;
 	private final String name;
+
+	private final String nifSeller;
+	private final String nifBuyer;
 	private final Set<Adventure> adventures = new HashSet<>();
 	private final Set<BulkRoomBooking> bulkBookings = new HashSet<>();
 
-	public Broker(String code, String name) {
+	/*public Broker(String code, String name) {
 		checkCode(code);
 		this.code = code;
 
 		checkName(name);
 		this.name = name;
 
+		Broker.brokers.add(this);
+	}*/
+
+	public Broker(String code, String name, String nifSeller, String nifBuyer) {
+		checkCode(code);
+		this.code = code;
+		
+		checkName(name);
+		this.name = name;
+		
+		checkNifSeller(nifSeller);
+		this.nifSeller = nifSeller;
+		
+		checkNifBuyer(nifBuyer);
+		this.nifBuyer = nifBuyer;
+		
 		Broker.brokers.add(this);
 	}
 
@@ -36,6 +55,31 @@ public class Broker {
 
 		for (Broker broker : Broker.brokers) {
 			if (broker.getCode().equals(code)) {
+				throw new BrokerException();
+			}
+		}
+	}
+	
+
+	private void checkNifSeller(String nif) {
+		if (nif == null || nif.trim().length() == 0) {
+			throw new BrokerException();
+		}
+
+		for (Broker broker : Broker.brokers) {
+			if (broker.getNifSeller().equals(nif)) {
+				throw new BrokerException();
+			}
+		}
+	}
+	
+	private void checkNifBuyer(String nif) {
+		if (nif == null || nif.trim().length() == 0) {
+			throw new BrokerException();
+		}
+
+		for (Broker broker : Broker.brokers) {
+			if (broker.getNifBuyer().equals(nif)) {
 				throw new BrokerException();
 			}
 		}
@@ -55,6 +99,14 @@ public class Broker {
 		return this.name;
 	}
 
+	public String getNifSeller() {
+		return nifSeller;
+	}
+
+	public String getNifBuyer() {
+		return nifBuyer;
+	}
+
 	public int getNumberOfAdventures() {
 		return this.adventures.size();
 	}
@@ -67,8 +119,8 @@ public class Broker {
 		return this.adventures.contains(adventure);
 	}
 
-	public void bulkBooking(int number, LocalDate arrival, LocalDate departure) {
-		BulkRoomBooking bulkBooking = new BulkRoomBooking(number, arrival, departure);
+	public void bulkBooking(int number, LocalDate arrival, LocalDate departure, String buyerNif, String buyerIban) {
+		BulkRoomBooking bulkBooking = new BulkRoomBooking(number, arrival, departure, buyerNif, buyerIban);
 		this.bulkBookings.add(bulkBooking);
 		bulkBooking.processBooking();
 	}

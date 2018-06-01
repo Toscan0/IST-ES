@@ -16,10 +16,12 @@ public class HotelHasVacancyMethodTest {
 	private final LocalDate departure = new LocalDate(2016, 12, 21);
 	private Hotel hotel;
 	private Room room;
+	private final double price1 = 124.5;
+	private final double price2 = 224.5;
 
 	@Before
 	public void setUp() {
-		this.hotel = new Hotel("XPTO123", "Paris");
+		this.hotel = new Hotel("XPTO123", "Paris", "NIF", "IBAN", price1, price2);
 		this.room = new Room(this.hotel, "01", Type.DOUBLE);
 	}
 
@@ -33,14 +35,14 @@ public class HotelHasVacancyMethodTest {
 
 	@Test
 	public void noVacancy() {
-		this.room.reserve(Type.DOUBLE, this.arrival, this.departure);
+		this.room.reserve(Type.DOUBLE, this.arrival, this.departure, "NIF", "IBAN");
 
 		assertNull(this.hotel.hasVacancy(Type.DOUBLE, this.arrival, this.departure));
 	}
 
 	@Test
 	public void noVacancyEmptyRoomSet() {
-		Hotel otherHotel = new Hotel("XPTO124", "Paris Germain");
+		Hotel otherHotel = new Hotel("XPTO124", "Paris Germain", "NIF2", "IBAN", price1, price2);
 
 		assertNull(otherHotel.hasVacancy(Type.DOUBLE, this.arrival, this.departure));
 	}

@@ -15,12 +15,14 @@ public class HotelCancelBookingMethodTest {
 	private Hotel hotel;
 	private Room room;
 	private Booking booking;
+	private final double price1 = 124.5;
+	private final double price2 = 224.5;
 
 	@Before
 	public void setUp() {
-		this.hotel = new Hotel("XPTO123", "Paris");
+		this.hotel = new Hotel("XPTO123", "Paris", "NIF", "IBAN", price1, price2);
 		this.room = new Room(this.hotel, "01", Type.DOUBLE);
-		this.booking = this.room.reserve(Type.DOUBLE, this.arrival, this.departure);
+		this.booking = this.room.reserve(Type.DOUBLE, this.arrival, this.departure, "NIF", "IBAN");
 	}
 
 	@Test

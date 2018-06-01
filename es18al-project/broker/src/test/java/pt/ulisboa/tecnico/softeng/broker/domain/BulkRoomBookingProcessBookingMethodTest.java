@@ -1,127 +1,352 @@
 package pt.ulisboa.tecnico.softeng.broker.domain;
 
-import org.junit.Before;
-
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 
-//import org.junit.BeforeClass;
 import org.joda.time.LocalDate;
-import org.junit.After;
-//import org.junit.AfterClass;
-//import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import mockit.Delegate;
+import mockit.Expectations;
+import mockit.Mocked;
+import mockit.integration.junit4.JMockit;
+import pt.ulisboa.tecnico.softeng.broker.exception.RemoteAccessException;
+import pt.ulisboa.tecnico.softeng.broker.interfaces.HotelInterface;
+import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
-import static org.junit.Assert.assertNotNull;
-
-//import java.util.HashSet;
-//import java.util.Set;
-
-//import pt.ulisboa.tecnico.softeng.activity.domain.ActivityProvider;
-//import pt.ulisboa.tecnico.softeng.bank.domain.Bank;
-//import pt.ulisboa.tecnico.softeng.broker.exception.RemoteAccessException;
-//import pt.ulisboa.tecnico.softeng.broker.interfaces.HotelInterface;
-//import pt.ulisboa.tecnico.softeng.hotel.dataobjects.RoomBookingData;
-import pt.ulisboa.tecnico.softeng.hotel.domain.Hotel;
-import pt.ulisboa.tecnico.softeng.hotel.domain.Room;
-import pt.ulisboa.tecnico.softeng.hotel.domain.Room.Type;
-//import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
-
-
-import pt.ulisboa.tecnico.softeng.broker.domain.BulkRoomBooking;
-//import pt.ulisboa.tecnico.softeng.broker.interfaces.HotelInterface;
-
+@RunWith(JMockit.class)
 public class BulkRoomBookingProcessBookingMethodTest {
-	private final LocalDate arrival = new LocalDate(2018, 3, 6);
-	private final LocalDate departure = new LocalDate(2018, 4, 6);
-	private int number;
-	private Hotel hotel;
-
+	private static final int NUMBER = 20;
+	private static final LocalDate arrival = new LocalDate(2016, 12, 19);
+	private static final LocalDate departure = new LocalDate(2016, 12, 21);
+	private BulkRoomBooking bulk;
+	private static final String NIF = "NIF";
+	private static final String IBAN = "IBAN";
 
 	@Before
 	public void setUp() {
-		this.hotel = new Hotel("XPTO123", "Paris");		
+		this.bulk = new BulkRoomBooking(NUMBER, arrival, departure, NIF, IBAN);
 	}
-	
+
 	@Test
-	public void successNoRooms() {
-		//primeira excepcao 
-		number = 1;
-		BulkRoomBooking booking = new BulkRoomBooking(number, arrival, departure);
-		booking.processBooking();
-		assertEquals( booking.getReferences(), new HashSet<>() ); //reference esta vazio []
-		assertNotNull(booking.getNumber());
-		assertNotNull(booking.getArrival());
-		assertNotNull(booking.getDeparture());
+	public void success(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new HashSet<>(Arrays.asList("ref1", "ref2"));
+			}
+		};
+
+		this.bulk.processBooking();
+
+		assertEquals(2, this.bulk.getReferences().size());
 	}
-	
-	
+
 	@Test
-	public void successNumberlessOne() {
-		//segunda excepcao
-		number = 0;
-		BulkRoomBooking booking = new BulkRoomBooking(number, arrival, departure);
-		booking.processBooking();
-		assertEquals( booking.getReferences(), new HashSet<>() ); //reference esta vazio []
-		assertNotNull(booking.getNumber());
-		assertNotNull(booking.getArrival());
-		assertNotNull(booking.getDeparture());
+	public void successTwice(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new HashSet<>(Arrays.asList("ref1", "ref2"));
+				this.result = new HashSet<>(Arrays.asList("ref3", "ref4"));
+			}
+		};
+
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+
+		assertEquals(4, this.bulk.getReferences().size());
 	}
-	
-	
+
 	@Test
-	public void success() {
-		//success a reservar quarto
-		new Room(this.hotel, "01", Type.SINGLE);
-		new Room(this.hotel, "02", Type.SINGLE);
-		new Room(this.hotel, "03", Type.SINGLE);
-		number = 2;
-		BulkRoomBooking booking = new BulkRoomBooking(number, arrival, departure);
-		booking.processBooking();
-		
-		assertNotNull(booking.getNumber());
-		assertNotNull(booking.getArrival());
-		assertNotNull(booking.getDeparture());
-		
-		//assertEquals( booking.getReferences(), HotelInterface.bulkBooking(number, arrival, departure) );
+	public void cancelled(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new HashSet<>(Arrays.asList("ref1", "ref2"));
+				this.result = new HotelException();
+			}
+		};
+
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+
+		assertEquals(2, this.bulk.getReferences().size());
 	}
-	
+
 	@Test
-	public void successNumberBiggerRooms() {
-		//terceira excepcao
-		number = 2;
-		new Room(this.hotel, "04", Type.SINGLE);
-		BulkRoomBooking booking = new BulkRoomBooking(number, arrival, departure);
-		booking.processBooking();
-		assertEquals( booking.getReferences(), new HashSet<>() ); //reference esta vazio []
-		assertNotNull(booking.getNumber());
-		assertNotNull(booking.getArrival());
-		assertNotNull(booking.getDeparture());
+	public void oneHotelException(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new HotelException();
+				this.result = new HashSet<>(Arrays.asList("ref1", "ref2"));
+			}
+		};
+
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+
+		assertEquals(2, this.bulk.getReferences().size());
 	}
-	
+
 	@Test
-	public void successBookingCancelled() {
-		number = 0;
-		BulkRoomBooking booking = new BulkRoomBooking(number, arrival, departure);
-		booking.processBooking(); //1excep
-		booking.processBooking(); //2excep
-		booking.processBooking(); //3excep -- cancelled true
-		booking.processBooking(); //cancelled retorna deve dar success
-		assertEquals( booking.getReferences(), new HashSet<>() ); //reference esta vazio []
-		assertNotNull(booking.getNumber());
-		assertNotNull(booking.getArrival());
-		assertNotNull(booking.getDeparture());
+	public void maxHotelException(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new HotelException();
+			}
+		};
+
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+
+		assertEquals(0, this.bulk.getReferences().size());
 	}
-	
-	
-	
-	
-	@After
-	public void tearDown() {
-		Hotel.hotels.clear();
+
+	@Test
+	public void maxMinusOneHotelException(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new Delegate() {
+					int i = 0;
+
+					Set<String> delegate() {
+						this.i++;
+						if (this.i < BulkRoomBooking.MAX_HOTEL_EXCEPTIONS - 1) {
+							throw new HotelException();
+						} else {
+							return new HashSet<>(Arrays.asList("ref1", "ref2"));
+						}
+					}
+				};
+			}
+		};
+
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+
+		assertEquals(2, this.bulk.getReferences().size());
 	}
-	
+
+	@Test
+	public void hotelExceptionValueIsResetBySuccess(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new Delegate() {
+					int i = 0;
+
+					Set<String> delegate() {
+						this.i++;
+						if (this.i < BulkRoomBooking.MAX_HOTEL_EXCEPTIONS - 1) {
+							throw new HotelException();
+						} else if (this.i == BulkRoomBooking.MAX_HOTEL_EXCEPTIONS - 1) {
+							return new HashSet<>(Arrays.asList("ref1", "ref2"));
+						} else if (this.i < 2 * BulkRoomBooking.MAX_HOTEL_EXCEPTIONS - 1) {
+							throw new HotelException();
+						} else {
+							return new HashSet<>(Arrays.asList("ref3", "ref4"));
+						}
+					}
+				};
+
+			}
+		};
+
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+
+		assertEquals(4, this.bulk.getReferences().size());
+	}
+
+	@Test
+	public void hotelExceptionValueIsResetByRemoteException(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new Delegate() {
+					int i = 0;
+
+					Set<String> delegate() {
+						this.i++;
+						if (this.i < BulkRoomBooking.MAX_HOTEL_EXCEPTIONS - 1) {
+							throw new HotelException();
+						} else if (this.i == BulkRoomBooking.MAX_HOTEL_EXCEPTIONS - 1) {
+							throw new RemoteAccessException();
+						} else if (this.i < 2 * BulkRoomBooking.MAX_HOTEL_EXCEPTIONS - 1) {
+							throw new HotelException();
+						} else {
+							return new HashSet<>(Arrays.asList("ref1", "ref2"));
+						}
+					}
+				};
+			}
+		};
+
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+
+		assertEquals(2, this.bulk.getReferences().size());
+	}
+
+	@Test
+	public void oneRemoteException(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new RemoteAccessException();
+				this.result = new HashSet<>(Arrays.asList("ref1", "ref2"));
+			}
+		};
+
+		this.bulk.processBooking();
+		this.bulk.processBooking();
+
+		assertEquals(2, this.bulk.getReferences().size());
+	}
+
+	@Test
+	public void maxRemoteException(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new RemoteAccessException();
+			}
+		};
+
+		for (int i = 0; i < BulkRoomBooking.MAX_REMOTE_ERRORS; i++) {
+			this.bulk.processBooking();
+		}
+		this.bulk.processBooking();
+
+		assertEquals(0, this.bulk.getReferences().size());
+	}
+
+	@Test
+	public void maxMinusOneRemoteException(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new Delegate() {
+					int i = 0;
+
+					Set<String> delegate() {
+						this.i++;
+						if (this.i < BulkRoomBooking.MAX_REMOTE_ERRORS - 1) {
+							throw new RemoteAccessException();
+						} else {
+							return new HashSet<>(Arrays.asList("ref1", "ref2"));
+						}
+					}
+				};
+				this.result = new RemoteAccessException();
+				this.times = BulkRoomBooking.MAX_REMOTE_ERRORS - 1;
+
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new HashSet<>(Arrays.asList("ref1", "ref2"));
+			}
+		};
+
+		for (int i = 0; i < BulkRoomBooking.MAX_REMOTE_ERRORS - 1; i++) {
+			this.bulk.processBooking();
+		}
+		this.bulk.processBooking();
+
+		assertEquals(2, this.bulk.getReferences().size());
+	}
+
+	@Test
+	public void remoteExceptionValueIsResetBySuccess(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new Delegate() {
+					int i = 0;
+
+					Set<String> delegate() {
+						this.i++;
+						if (this.i < BulkRoomBooking.MAX_REMOTE_ERRORS - 1) {
+							throw new RemoteAccessException();
+						} else if (this.i == BulkRoomBooking.MAX_REMOTE_ERRORS - 1) {
+							return new HashSet<>(Arrays.asList("ref1", "ref2"));
+						} else if (this.i < 2 * BulkRoomBooking.MAX_REMOTE_ERRORS - 1) {
+							throw new RemoteAccessException();
+						} else {
+							return new HashSet<>(Arrays.asList("ref3", "ref4"));
+						}
+					}
+				};
+			}
+		};
+
+		for (int i = 0; i < BulkRoomBooking.MAX_REMOTE_ERRORS - 1; i++) {
+			this.bulk.processBooking();
+		}
+		this.bulk.processBooking();
+		for (int i = 0; i < BulkRoomBooking.MAX_REMOTE_ERRORS - 1; i++) {
+			this.bulk.processBooking();
+		}
+		this.bulk.processBooking();
+
+		assertEquals(4, this.bulk.getReferences().size());
+	}
+
+	@Test
+	public void remoteExceptionValueIsResetByHotelException(@Mocked final HotelInterface roomInterface) {
+		new Expectations() {
+			{
+				HotelInterface.bulkBooking(NUMBER, arrival, departure, NIF, IBAN);
+				this.result = new Delegate() {
+					int i = 0;
+
+					Set<String> delegate() {
+						this.i++;
+						if (this.i < BulkRoomBooking.MAX_REMOTE_ERRORS - 1) {
+							throw new RemoteAccessException();
+						} else if (this.i == BulkRoomBooking.MAX_REMOTE_ERRORS - 1) {
+							throw new HotelException();
+						} else if (this.i < 2 * BulkRoomBooking.MAX_REMOTE_ERRORS - 1) {
+							throw new RemoteAccessException();
+						} else {
+							return new HashSet<>(Arrays.asList("ref1", "ref2"));
+						}
+					}
+				};
+			}
+		};
+
+		for (int i = 0; i < BulkRoomBooking.MAX_REMOTE_ERRORS - 1; i++) {
+			this.bulk.processBooking();
+		}
+		this.bulk.processBooking();
+		for (int i = 0; i < BulkRoomBooking.MAX_REMOTE_ERRORS - 1; i++) {
+			this.bulk.processBooking();
+		}
+		this.bulk.processBooking();
+
+		assertEquals(2, this.bulk.getReferences().size());
+	}
+
 }

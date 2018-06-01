@@ -2,26 +2,24 @@ package pt.ulisboa.tecnico.softeng.tax.domain;
 
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
-
 public class Buyer extends TaxPayer {
-	public Buyer(String NIF, String name, String adress) {
-		super(NIF, name, adress);
-		IRS.taxpayers.put(NIF,this);
-	} 
+	private final static int PERCENTAGE = 5;
 
-	public float taxReturn(int YEAR) {
-		float returntax = 0;
-		int ninvoices = 0;
-		if (YEAR >= 1970) {
-			for (Invoice inv : TaxPayer.invoices.values()) {
-				if (this == inv.getBuyer() && YEAR == inv.getDate().getYear()) {
-					returntax += 0.05* inv.getiVA();
-					ninvoices++;
-				}
-			}
-			if (ninvoices == 0) throw new TaxException();
-			return returntax; 
+	public Buyer(IRS irs, String NIF, String name, String address) {
+		super(irs, NIF, name, address);
+	}
+
+	public double taxReturn(int year) {
+		if (year < 1970) {
+			throw new TaxException();
 		}
-		else throw new TaxException();
+
+		double result = 0;
+		for (Invoice invoice : this.invoices) {
+			if (invoice.getDate().getYear() == year) {
+				result = result + invoice.getIva() * PERCENTAGE / 100;
+			}
+		}
+		return result;
 	}
 }

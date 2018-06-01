@@ -1,5 +1,7 @@
 package pt.ulisboa.tecnico.softeng.bank.domain;
 
+import static org.junit.Assert.assertNull;
+
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -26,33 +28,30 @@ public class BankGetAccountMethodTest {
 		Assert.assertEquals(account, result);
 	}
 
-	@Test
+	@Test(expected = BankException.class)
 	public void nullIBAN() {
-		Assert.assertNull(this.bank.getAccount(null));
-		
+		this.bank.getAccount(null);
 	}
 
-	@Test
+	@Test(expected = BankException.class)
 	public void emptyIBAN() {
-		Assert.assertNull(this.bank.getAccount(""));
+		this.bank.getAccount("");
 	}
 
-	@Test
+	@Test(expected = BankException.class)
 	public void blankIBAN() {
-		Assert.assertNull(this.bank.getAccount("    "));
+		this.bank.getAccount("    ");
 	}
 
-	@Test
 	public void emptySetOfAccounts() {
-		Assert.assertNull(this.bank.getAccount("XPTO"));
+		assertNull(this.bank.getAccount("XPTO"));
 	}
 
-	@Test
 	public void severalAccountsDoNoMatch() {
 		new Account(this.bank, this.client);
 		new Account(this.bank, this.client);
 
-		Assert.assertNull(this.bank.getAccount("XPTO"));
+		assertNull(this.bank.getAccount("XPTO"));
 	}
 
 	@After

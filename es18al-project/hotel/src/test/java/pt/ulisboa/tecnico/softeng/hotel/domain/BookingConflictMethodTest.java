@@ -12,12 +12,14 @@ public class BookingConflictMethodTest {
 	private final LocalDate arrival = new LocalDate(2016, 12, 19);
 	private final LocalDate departure = new LocalDate(2016, 12, 24);
 	private Booking booking;
+	private final double price1 = 124.5;
+	private final double price2 = 224.5;
 
 	@Before
 	public void setUp() {
-		Hotel hotel = new Hotel("XPTO123", "Londres");
+		Hotel hotel = new Hotel("XPTO123", "Londres", "NIF", "IBAN", price1, price2);
 
-		this.booking = new Booking(hotel, this.arrival, this.departure);
+		this.booking = new Booking(hotel, this.arrival, this.departure, "NIF", "IBAN", 123.4);
 	}
 
 	@Test

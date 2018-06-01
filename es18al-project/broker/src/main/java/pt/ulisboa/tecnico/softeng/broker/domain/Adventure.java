@@ -5,22 +5,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import pt.ulisboa.tecnico.softeng.broker.exception.BrokerException;
+import pt.ulisboa.tecnico.softeng.car.domain.Renting;
 
 public class Adventure {
 	private static Logger logger = LoggerFactory.getLogger(Adventure.class);
 
 	public static enum State {
-		PROCESS_PAYMENT, RESERVE_ACTIVITY, BOOK_ROOM, UNDO, CONFIRMED, CANCELLED
+		PROCESS_PAYMENT, RESERVE_ACTIVITY, BOOK_ROOM, UNDO, CONFIRMED, CANCELLED, RENT_VEHICLE
 	}
 
 	private static int counter = 0;
 
 	private final String ID;
+	private final BClient bclient;
 	private final Broker broker;
 	private final LocalDate begin;
 	private final LocalDate end;
-	private final int age;
-	private final String IBAN;
 	private final int amount;
 	private String paymentConfirmation;
 	private String paymentCancellation;
@@ -29,26 +29,37 @@ public class Adventure {
 	private String activityConfirmation;
 	private String activityCancellation;
 
+	private Renting vehicleConfirmation;
+	private Renting vehicleCancellation;
+	
+	private boolean rentVehicle;
+
+	private String invoiceReference;
+	private String type = "Adventure_Type";
+	
+	private boolean cancelledInvoice = false;
+	
 	private AdventureState state;
 
-	public Adventure(Broker broker, LocalDate begin, LocalDate end, int age, String IBAN, int amount) {
-		checkArguments(broker, begin, end, age, IBAN, amount);
+	public Adventure(Broker broker,LocalDate begin, LocalDate end, BClient bclient, int amount, boolean rentVehicle) {
+		checkArguments(broker, begin, end, bclient, amount);
 
 		this.ID = broker.getCode() + Integer.toString(++counter);
 		this.broker = broker;
 		this.begin = begin;
 		this.end = end;
-		this.age = age;
-		this.IBAN = IBAN;
+		this.bclient = bclient;
 		this.amount = amount;
+		this.rentVehicle = rentVehicle;
 
 		broker.addAdventure(this);
 
-		setState(State.PROCESS_PAYMENT);
+		setState(State.RESERVE_ACTIVITY);
 	}
 
-	private void checkArguments(Broker broker, LocalDate begin, LocalDate end, int age, String IBAN, int amount) {
-		if (broker == null || begin == null || end == null || IBAN == null || IBAN.trim().length() == 0) {
+
+	private void checkArguments(Broker broker, LocalDate begin, LocalDate end, BClient bclient, int amount) {
+		if (broker == null || begin == null || end == null || bclient == null) {
 			throw new BrokerException();
 		}
 
@@ -56,13 +67,23 @@ public class Adventure {
 			throw new BrokerException();
 		}
 
-		if (age < 18 || age > 100) {
-			throw new BrokerException();
-		}
-
 		if (amount < 1) {
 			throw new BrokerException();
 		}
+	}
+	
+	public void setType(String type) {
+		this.type = type;
+	}
+	public String getType() {
+		return this.type;
+	}
+	public String getInvoiceReference() {
+		return this.invoiceReference;
+	}
+		
+	public void setInvoiceReference(String invoiceReference) {
+		this.invoiceReference = invoiceReference;
 	}
 
 	public String getID() {
@@ -81,12 +102,8 @@ public class Adventure {
 		return this.end;
 	}
 
-	public int getAge() {
-		return this.age;
-	}
-
-	public String getIBAN() {
-		return this.IBAN;
+	public BClient getBClient() {
+		return this.bclient;
 	}
 
 	public int getAmount() {
@@ -141,23 +158,51 @@ public class Adventure {
 		this.roomCancellation = roomCancellation;
 	}
 
+	public Renting getVehicleConfirmation() {
+		return vehicleConfirmation;
+	}
+
+	public void setVehicleConfirmation(Renting vehicleConfirmation) {
+		this.vehicleConfirmation = vehicleConfirmation;
+	}
+
+	public Renting getVehicleCancellation() {
+		return vehicleCancellation;
+	}
+
+	public void setVehicleCancellation(Renting vehicleCancellation) {
+		this.vehicleCancellation = vehicleCancellation;
+	}
+	
+
+	public boolean isRentVehicle() {
+		return rentVehicle;
+	}
+
+	public void setRentVehicle(boolean rentVehicle) {
+		this.rentVehicle = rentVehicle;
+	}
+
 	public State getState() {
 		return this.state.getState();
 	}
 
 	public void setState(State state) {
 		switch (state) {
-		case PROCESS_PAYMENT:
-			this.state = new ProcessPaymentState();
-			break;
 		case RESERVE_ACTIVITY:
 			this.state = new ReserveActivityState();
 			break;
 		case BOOK_ROOM:
 			this.state = new BookRoomState();
 			break;
+		case RENT_VEHICLE:
+			this.state = new VehicleRentState();
+			break;
 		case UNDO:
 			this.state = new UndoState();
+			break;
+		case PROCESS_PAYMENT:
+			this.state = new ProcessPaymentState();
 			break;
 		case CONFIRMED:
 			this.state = new ConfirmedState();
@@ -172,7 +217,6 @@ public class Adventure {
 	}
 
 	public void process() {
-		logger.debug("process ID:{}, state:{} ", this.ID, getState().name());
 		this.state.process(this);
 	}
 
@@ -186,6 +230,14 @@ public class Adventure {
 
 	public boolean cancelPayment() {
 		return getPaymentConfirmation() != null && getPaymentCancellation() == null;
+	}
+	
+	public boolean isCancelledInvoice() {
+		return this.cancelledInvoice;
+	}
+
+	public void setCancelledInvoice(boolean cancelledInvoice) {
+		this.cancelledInvoice = cancelledInvoice;
 	}
 
 }

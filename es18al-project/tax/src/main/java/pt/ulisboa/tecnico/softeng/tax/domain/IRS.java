@@ -1,44 +1,95 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
-import pt.ulisboa.tecnico.softeng.tax.dataobjects.InvoiceData;
-import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
+import java.util.HashSet;
+import java.util.Set;
 
-import java.util.HashMap;
-import java.util.Map;
+import pt.ulisboa.tecnico.softeng.tax.dataobjects.InvoiceData;
 
 public class IRS {
-	
-	private static IRS irs = null;
-	
-	public static Map<String,ItemType> itemtypes = new HashMap<String,ItemType>();
-	public static Map<String,TaxPayer> taxpayers = new HashMap<String,TaxPayer>();
-	
-	
-	public static ItemType getItemTypeByName( String name) {
-		return IRS.itemtypes.get(name);
-	}
-	public static TaxPayer getItemTaxPayerByNIF( String nif){
-		TaxPayer tp = IRS.taxpayers.get(nif);
-		return tp;
+	private final Set<TaxPayer> taxPayers = new HashSet<>();
+	private final Set<ItemType> itemTypes = new HashSet<>();
+
+	private static IRS instance;
+
+	public static IRS getIRS() {
+		if (instance == null) {
+			instance = new IRS();
+		}
+		return instance;
 	}
 
-	protected IRS(){
-		//Singleton
+	private IRS() {
 	}
-	
-	public static String submitInvoice(InvoiceData invoiceData) throws TaxException{
-		ItemType item = IRS.itemtypes.get(invoiceData.getItemType());
-		TaxPayer buyer =  IRS.taxpayers.get(invoiceData.getBuyerNIF());
-		TaxPayer seller =  IRS.taxpayers.get(invoiceData.getSellerNIF());
-		Invoice invoice = new Invoice( invoiceData.getValue(), invoiceData.getDate(), item, seller, buyer );		
+
+	void addTaxPayer(TaxPayer taxPayer) {
+		this.taxPayers.add(taxPayer);
+	}
+
+	public TaxPayer getTaxPayerByNIF(String NIF) {
+		for (TaxPayer taxPayer : this.taxPayers) {
+			if (taxPayer.getNIF().equals(NIF)) {
+				return taxPayer;
+			}
+		}
+		return null;
+	}
+
+	void addItemType(ItemType itemType) {
+		this.itemTypes.add(itemType);
+	}
+
+	public ItemType getItemTypeByName(String name) {
+		for (ItemType itemType : this.itemTypes) {
+			if (itemType.getName().equals(name)) {
+				return itemType;
+			}
+		}
+		return null;
+	}
+
+	public static String submitInvoice(InvoiceData invoiceData) {
+		IRS irs = IRS.getIRS();
+		Seller seller = (Seller) irs.getTaxPayerByNIF(invoiceData.getSellerNIF());
+		Buyer buyer = (Buyer) irs.getTaxPayerByNIF(invoiceData.getBuyerNIF());
+		ItemType itemType = irs.getItemTypeByName(invoiceData.getItemType());
+		Invoice invoice = new Invoice(invoiceData.getValue(), invoiceData.getDate(), itemType, seller, buyer);
+
 		return invoice.getReference();
 	}
-	
-	public static IRS getIRS() {
-		if(irs == null) {
-	         irs = new IRS();
-	      }
-		return irs;
+
+	public void removeItemTypes() {
+		this.itemTypes.clear();
 	}
 
+	public void removeTaxPayers() {
+		this.taxPayers.clear();
+	}
+
+	public void clearAll() {
+		removeItemTypes();
+		removeTaxPayers();
+	}
+
+	public static Invoice getInvoiceByReference(String reference){
+		
+		IRS irs = IRS.getIRS();
+		for(TaxPayer taxPayer: irs.taxPayers){
+			Invoice invoice = taxPayer.getInvoiceByReference(reference);
+			if(invoice != null){
+				return invoice;
+			}
+		}
+		return null;
+	}
+	
+	public static void cancelInvoice(String invoiceReference) {
+		
+		if(invoiceReference != null && !invoiceReference.isEmpty()){
+			Invoice invoice = getInvoiceByReference(invoiceReference);
+			if(invoice != null){
+				invoice.cancel();
+			}
+		}
+	}
+	
 }

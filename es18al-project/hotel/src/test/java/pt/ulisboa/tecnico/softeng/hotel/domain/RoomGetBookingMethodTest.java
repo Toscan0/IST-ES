@@ -16,12 +16,14 @@ public class RoomGetBookingMethodTest {
 	private Hotel hotel;
 	private Room room;
 	private Booking booking;
+	private final double price1 = 124.5;
+	private final double price2 = 224.5;
 
 	@Before
 	public void setUp() {
-		this.hotel = new Hotel("XPTO123", "Lisboa");
+		this.hotel = new Hotel("XPTO123", "Lisboa", "NIF", "IBAN", price1, price2);
 		this.room = new Room(this.hotel, "01", Type.SINGLE);
-		this.booking = this.room.reserve(Type.SINGLE, this.arrival, this.departure);
+		this.booking = this.room.reserve(Type.SINGLE, this.arrival, this.departure, "NIF", "IBAN");
 	}
 
 	@Test

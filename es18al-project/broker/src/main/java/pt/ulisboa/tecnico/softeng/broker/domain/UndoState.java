@@ -1,6 +1,7 @@
 package pt.ulisboa.tecnico.softeng.broker.domain;
 
 import pt.ulisboa.tecnico.softeng.activity.exception.ActivityException;
+import pt.ulisboa.tecnico.softeng.activity.interfaces.TaxInterface;
 import pt.ulisboa.tecnico.softeng.bank.exception.BankException;
 import pt.ulisboa.tecnico.softeng.broker.domain.Adventure.State;
 import pt.ulisboa.tecnico.softeng.broker.exception.RemoteAccessException;
@@ -42,8 +43,13 @@ public class UndoState extends AdventureState {
 				// does not change state
 			}
 		}
-
-		if (!requiresCancelPayment(adventure) && !requiresCancelActivity(adventure) && !requiresCancelRoom(adventure)) {
+		
+		if(requiresCancelInvoice(adventure)) {
+			TaxInterface.cancelInvoice(adventure.getInvoiceReference());
+			adventure.setCancelledInvoice(true);
+		}
+	
+		if (!requiresCancelPayment(adventure) && !requiresCancelActivity(adventure) && !requiresCancelRoom(adventure) && !requiresCancelInvoice(adventure)) {
 			adventure.setState(State.CANCELLED);
 		}
 	}
@@ -58,6 +64,10 @@ public class UndoState extends AdventureState {
 
 	public boolean requiresCancelPayment(Adventure adventure) {
 		return adventure.getPaymentConfirmation() != null && adventure.getPaymentCancellation() == null;
+	}
+	
+	public boolean requiresCancelInvoice(Adventure adventure) {
+		return adventure.getInvoiceReference() != null;
 	}
 
 }

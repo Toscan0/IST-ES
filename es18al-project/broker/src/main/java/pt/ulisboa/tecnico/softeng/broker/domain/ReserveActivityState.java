@@ -17,7 +17,7 @@ public class ReserveActivityState extends AdventureState {
 	public void process(Adventure adventure) {
 		try {
 			adventure.setActivityConfirmation(
-					ActivityInterface.reserveActivity(adventure.getBegin(), adventure.getEnd(), adventure.getAge()));
+					ActivityInterface.reserveActivity(adventure.getBegin(), adventure.getEnd(), adventure.getBClient().getAge()));
 		} catch (ActivityException ae) {
 			adventure.setState(State.UNDO);
 			return;
@@ -30,7 +30,11 @@ public class ReserveActivityState extends AdventureState {
 		}
 
 		if (adventure.getBegin().equals(adventure.getEnd())) {
-			adventure.setState(State.CONFIRMED);
+			if (adventure.isRentVehicle()){
+			  	adventure.setState(State.RENT_VEHICLE);
+			} else {
+				adventure.setState(State.PROCESS_PAYMENT);
+			}
 		} else {
 			adventure.setState(State.BOOK_ROOM);
 		}

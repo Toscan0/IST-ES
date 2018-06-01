@@ -12,10 +12,12 @@ import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
 public class RoomConstructorMethodTest {
 	private Hotel hotel;
+	private final double price1 = 124.5;
+	private final double price2 = 224.5;
 
 	@Before
 	public void setUp() {
-		this.hotel = new Hotel("XPTO123", "Lisboa");
+		this.hotel = new Hotel("XPTO123", "Lisboa", "NIF", "IBAN", price1, price2);
 	}
 
 	@Test
@@ -52,6 +54,7 @@ public class RoomConstructorMethodTest {
 	public void nonAlphanumericRoomNumber() {
 		new Room(this.hotel, "JOSE", Type.DOUBLE);
 	}
+	
 
 	@Test
 	public void nonUniqueRoomNumber() {

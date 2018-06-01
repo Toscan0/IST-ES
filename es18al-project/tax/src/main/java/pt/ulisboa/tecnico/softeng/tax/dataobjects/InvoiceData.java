@@ -2,39 +2,26 @@ package pt.ulisboa.tecnico.softeng.tax.dataobjects;
 
 import org.joda.time.LocalDate;
 
-import pt.ulisboa.tecnico.softeng.tax.domain.IRS;
-import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
-
 public class InvoiceData {
-	
 	private String sellerNIF;
 	private String buyerNIF;
 	private String itemType;
-	private float value;
+	private double value;
 	private LocalDate date;
 
-	public InvoiceData(String sellerNIF, String	buyerNIF, String itemType, float value, LocalDate date){
-		if(checkArguments(sellerNIF, buyerNIF, itemType, value, date)){
-			this.sellerNIF = sellerNIF;
-			this. buyerNIF = buyerNIF;
-			this.itemType = itemType;
-			this.value = value;
-			this.date = date;
-		}else{
-			throw new TaxException();
-		}
+	public InvoiceData() {
 	}
-	
-	public boolean checkArguments(String sellerNIF, String	buyerNIF, String itemType, float value, LocalDate date){
-		if(sellerNIF != null && sellerNIF.length() == 9 && buyerNIF != null && buyerNIF.length() == 9 &&
-		   IRS.getItemTypeByName(itemType) != null && date.isAfter(new LocalDate(1969,12,31)))
-			return true;
-		else 
-			return false;
+
+	public InvoiceData(String sellerNIF, String buyerNIF, String itemType, double value, LocalDate date) {
+		this.sellerNIF = sellerNIF;
+		this.buyerNIF = buyerNIF;
+		this.itemType = itemType;
+		this.value = value;
+		this.date = date;
 	}
-	
+
 	public String getSellerNIF() {
-		return sellerNIF;
+		return this.sellerNIF;
 	}
 
 	public void setSellerNIF(String sellerNIF) {
@@ -42,7 +29,7 @@ public class InvoiceData {
 	}
 
 	public String getBuyerNIF() {
-		return buyerNIF;
+		return this.buyerNIF;
 	}
 
 	public void setBuyerNIF(String buyerNIF) {
@@ -50,15 +37,15 @@ public class InvoiceData {
 	}
 
 	public String getItemType() {
-		return itemType;
+		return this.itemType;
 	}
 
 	public void setItemType(String itemType) {
 		this.itemType = itemType;
 	}
 
-	public float getValue() {
-		return value;
+	public double getValue() {
+		return this.value;
 	}
 
 	public void setValue(float value) {
@@ -66,12 +53,11 @@ public class InvoiceData {
 	}
 
 	public LocalDate getDate() {
-		return date;
+		return this.date;
 	}
 
 	public void setDate(LocalDate date) {
 		this.date = date;
-	}	
-	
-	
+	}
+
 }
