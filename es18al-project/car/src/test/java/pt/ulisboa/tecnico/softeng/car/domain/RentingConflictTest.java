@@ -5,17 +5,15 @@ import static org.junit.Assert.*;
 import mockit.Mocked;
 import mockit.integration.junit4.JMockit;
 import org.joda.time.LocalDate;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import org.junit.runner.RunWith;
 import pt.ulisboa.tecnico.softeng.car.exception.CarException;
-import pt.ulisboa.tecnico.softeng.car.interfaces.BankInterface;
-import pt.ulisboa.tecnico.softeng.car.interfaces.TaxInterface;
+import pt.ulisboa.tecnico.softeng.car.services.remote.BankInterface;
+import pt.ulisboa.tecnico.softeng.car.services.remote.TaxInterface;
 
 @RunWith(JMockit.class)
-public class RentingConflictTest  extends RollbackTestAbstractClass{
+public class RentingConflictTest extends RollbackTestAbstractClass {
 	private static final String PLATE_CAR = "22-33-HZ";
 	private static final String DRIVING_LICENSE = "br112233";
 	private static final LocalDate date0 = LocalDate.parse("2018-01-05");
@@ -34,8 +32,8 @@ public class RentingConflictTest  extends RollbackTestAbstractClass{
 	@Mocked
 	private TaxInterface taxInterface;
 
-	@Override
-	public void populate4Test() {
+    @Override
+    public void populate4Test() {
 		RentACar rentACar = new RentACar(RENT_A_CAR_NAME, NIF, IBAN);
 		this.car = new Car(PLATE_CAR, 10, 10, rentACar);
 	}

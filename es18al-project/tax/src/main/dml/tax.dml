@@ -1,7 +1,7 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
-class IRS{
-	
+class IRS {
+	int counter;
 }
 
 relation DomainRootHasIRSApplication {
@@ -13,42 +13,49 @@ relation DomainRootHasIRSApplication {
 	}
 }
 
-class TaxPayer{
-	String NIF;
-	String name; 
-	String address;
+class TaxPayer {
+    String nif;
+    String name;
+    String address;
 }
 
+class Buyer extends TaxPayer;
 class Seller extends TaxPayer;
-class Buyer  extends TaxPayer;
 
-relation IRSHasTaxPayers{
-	IRS playsRole irs{
+
+relation IRSHasTaxPayers {
+	IRS playsRole irs {
 		multiplicity 1..1;
 	}
-	TaxPayer playsRole taxPayer{
+	TaxPayer playsRole taxPayer {
 		multiplicity 0..*;
 	}
 }
 
-class Invoice{
-	String reference; 
+class ItemType {
+    String name;
+    int tax;
+}
+
+relation IRSHasItemTypes {
+	IRS playsRole irs {
+		multiplicity 1..1;
+	}
+	ItemType playsRole itemType {
+		multiplicity 0..*;
+	}
+}
+
+class Invoice {
+	String reference;
 	double value;
-	double IVA;
-	LocalDate date; 	
+	double iva;
+	LocalDate date;
+	boolean cancelled;
 }
 
-relation BuyerHasInvoice {
-	Buyer playsRole taxPayerBuyer {
-		multiplicity 1..1;
-	}
-	Invoice playsRole invoice {
-		multiplicity 0..*;
-	}
-}
-relation SellerHasInvoice {
-
-	Seller playsRole taxPayerSeller {
+relation IRSHasInvoices {
+	IRS playsRole irs {
 		multiplicity 1..1;
 	}
 	Invoice playsRole invoice {
@@ -56,29 +63,30 @@ relation SellerHasInvoice {
 	}
 }
 
-
-
-class ItemType{
-	String name;
-	int tax;
-}
-
-relation ItemTypeHasInvoice{
-	ItemType playsRole itemType{
+relation ItemTypeHasInvoices {
+	ItemType playsRole itemType {
 		multiplicity 1..1;
 	}
-	Invoice playsRole invoice{
+	Invoice playsRole invoice {
 		multiplicity 0..*;
 	}
-
 }
 
-relation IRSHasItemType{
-	IRS playsRole irs{
+relation SellerHasInvoices {
+    Seller playsRole seller {
 		multiplicity 1..1;
 	}
-	ItemType playsRole itemType{
-		multiplicity 0..*;
-	}
-
+    Invoice playsRole invoice {
+        multiplicity 0..*;
+    }
 }
+
+relation BuyerHasInvoices {
+    Buyer playsRole buyer {
+		multiplicity 1..1;
+	}
+    Invoice playsRole invoice {
+        multiplicity 0..*;
+    }
+}
+

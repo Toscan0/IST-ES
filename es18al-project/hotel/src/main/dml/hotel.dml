@@ -42,16 +42,38 @@ class Booking {
 	LocalDate arrival;
 	LocalDate departure;
 	double price;
-	String nif;
+	String buyerNif;
 	String providerNif;
 	String paymentReference;
 	String invoiceReference;
+	boolean cancelledInvoice;
+	String cancelledPaymentReference;
 	String buyerIban;
 }
 
 relation RoomHasBookings {
 	Room playsRole room {
 		multiplicity 1..1;
+	}
+	Booking playsRole booking {
+		multiplicity 0..*;
+	}
+}
+
+class Processor;
+
+relation HotelHasProcessor {
+	Hotel playsRole hotel {
+		multiplicity 1..1;
+	}
+	Processor playsRole processor {
+		multiplicity 1..1;
+	}
+}
+
+relation ProcessorManagesHotelBookings {
+	Processor playsRole processor {
+		multiplicity 0..1;
 	}
 	Booking playsRole booking {
 		multiplicity 0..*;

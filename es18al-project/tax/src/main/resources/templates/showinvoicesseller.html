@@ -1,0 +1,40 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Invoices of Taxpayer</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/3.3.7-1/css/bootstrap.min.css}" />
+<script th:src="@{/webjars/jquery/3.1.1/jquery.min.js}"></script>
+<script th:src="@{/webjars/bootstrap/3.3.7-1/js/bootstrap.min.js}"></script>
+</head>
+<body>
+	<div class="container">
+		<h2>
+			Invoices of Seller <span th:text="${seller.name}">José</span> 
+			<span th:text="${seller.NIF}">12345689</span>
+		</h2>
+		<a class="btn btn-default pull-right" th:href="@{/sellers}">Sellers</a>
+		<br/>
+		<h3>List of Invoices</h3>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>BuyerNif</th>
+					<th>ItemType</th>
+					<th>Value</th>
+					<th>Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="invoice: ${seller.invoices}">
+					<td th:text="${invoice.buyerNIF}">Buyer Nif</td>
+					<td th:text="${invoice.itemType}">ItemType</td>
+					<td th:text="${invoice.value}">Value</td>
+					<td th:text="${invoice.date}">Date</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

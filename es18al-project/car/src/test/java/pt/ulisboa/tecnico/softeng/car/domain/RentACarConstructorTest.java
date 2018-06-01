@@ -7,14 +7,16 @@ import org.junit.Test;
 
 import pt.ulisboa.tecnico.softeng.car.exception.CarException;
 
-public class RentACarConstructorTest  extends RollbackTestAbstractClass{
+public class RentACarConstructorTest extends RollbackTestAbstractClass {
 	private static final String NAME = "eartz";
 	private static final String NIF = "NIF";
 	private static final String IBAN = "IBAN";
 
 	@Override
-	public void populate4Test() {}
-	
+    public void populate4Test() {
+
+    }
+
 	@Test
 	public void success() {
 		RentACar rentACar = new RentACar(NAME, NIF, IBAN);
@@ -30,5 +32,4 @@ public class RentACarConstructorTest  extends RollbackTestAbstractClass{
 	public void emptyName() {
 		new RentACar("", NIF, IBAN);
 	}
-
 }

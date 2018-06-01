@@ -7,10 +7,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import junit.framework.Assert;
 import pt.ulisboa.tecnico.softeng.car.exception.CarException;
 
-public class VehicleConstructorTest  extends RollbackTestAbstractClass{
+public class VehicleConstructorTest extends RollbackTestAbstractClass {
 	private static final String PLATE_CAR = "22-33-HZ";
 	private static final String PLATE_MOTORCYCLE = "44-33-HZ";
 	private static final String RENT_A_CAR_NAME = "Eartz";
@@ -18,13 +17,13 @@ public class VehicleConstructorTest  extends RollbackTestAbstractClass{
 	private static final String IBAN = "IBAN";
 	private RentACar rentACar;
 
-	@Override
+    @Override
 	public void populate4Test() {
 		this.rentACar = new RentACar(RENT_A_CAR_NAME, NIF, IBAN);
 	}
 
 	@Test
-	public void success() {
+    public void success() {
 		Vehicle car = new Car(PLATE_CAR, 10, 10, this.rentACar);
 		Vehicle motorcycle = new Motorcycle(PLATE_MOTORCYCLE, 10, 10, this.rentACar);
 
@@ -54,13 +53,13 @@ public class VehicleConstructorTest  extends RollbackTestAbstractClass{
 	public void invalidLicensePlate2() {
 		new Car("AA-XX-aaa", 10, 10, this.rentACar);
 	}
-	
+
 	@Test(expected = CarException.class)
 	public void duplicatedPlate() {
 		new Car(PLATE_CAR, 0, 10, this.rentACar);
 		new Car(PLATE_CAR, 0, 10, this.rentACar);
 	}
-	
+
 	@Test(expected = CarException.class)
 	public void duplicatedPlateDifferentRentACar() {
 		new Car(PLATE_CAR, 0, 10, rentACar);
@@ -77,6 +76,5 @@ public class VehicleConstructorTest  extends RollbackTestAbstractClass{
 	public void noRentACar() {
 		new Car(PLATE_CAR, 0, 10, null);
 	}
-
 
 }

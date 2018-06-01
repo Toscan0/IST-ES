@@ -1,0 +1,52 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Rentings</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/3.3.7-1/css/bootstrap.min.css}" />
+<script th:src="@{/webjars/jquery/3.1.1/jquery.min.js}"></script>
+<script th:src="@{/webjars/bootstrap/3.3.7-1/js/bootstrap.min.js}"></script>
+</head>
+<body>
+	<div class="container">
+		<h2>
+			Rentings of the vehicle <span th:text="${vehicle.plate}">Plate</span>
+		</h2>
+		<a class="btn btn-default pull-right" th:href="@{/rentacars/{code}/vehicles(code=${rentacars.code))}">Vehicles</a>
+		<br/>
+		<h3>Create Renting</h3>
+		<p class="text-danger" th:text="${error}">Error</p>
+		<form class="form-inline" th:action="@{/rentacars/{code}/vehicles/{plate}/rentings}" th:object="${rentings}" method="post">
+			<label>Driving License: </label> <input class="form-control" type="text" th:field="*{drivingLicense}" /> 
+			<label>Date Begin: </label> <input class="form-control" type="date" th:field="*{dateBegin}" /> 
+			<label>Date End: </label> <input class="form-control" type="date" th:field="*{dateEnd}" /> 
+			<label>Nif: </label> <input class="form-control" type="number" th:field="*{nif}" /> 
+			<label>Iban: </label> <input class="form-control" type="number" th:field="*{iban}" />
+			<input class="btn btn-primary" type="submit" value="Submit" />
+		</form>
+		<br/>
+		<h3>List of Rentings</h3>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Driving License</th>
+					<th>Date Begin</th>
+					<th>Date End</th>
+					<th>Nif</th>
+					<th>Iban</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="renting: ${rentings}">
+					<td th:text="${renting.drivingLicense}">Name</td>
+					<td th:text="${renting.dateBegin}">DateBegin</td>
+					<td th:text="${renting.dateEnd}">DateEnd</td>
+					<td th:text="${renting.Nif}">Nif</td>
+					<td th:text="${renting.Iban}">Iban</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

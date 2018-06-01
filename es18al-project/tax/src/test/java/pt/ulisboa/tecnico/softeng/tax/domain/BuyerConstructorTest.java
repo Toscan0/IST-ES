@@ -7,125 +7,76 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
 public class BuyerConstructorTest extends RollbackTestAbstractClass {
 	private static final String ADDRESS = "Somewhere";
 	private static final String NAME = "José Vendido";
 	private static final String NIF = "123456789";
-	private Buyer buyer;
-	private TaxPayer tp;
 
 	IRS irs;
 
 	@Override
 	public void populate4Test() {
-		this.irs = new IRS();
+		this.irs = IRS.getIRSInstance();
 	}
-	
-	@Test
-	public void success() {	
-		
-		this.buyer = new Buyer();
-		this.buyer.setIrs(this.irs);
-		this.buyer.setAddress(ADDRESS);
-		this.buyer.setName(NAME);
-		this.buyer.setNIF(NIF);
-		this.irs.addTaxPayer(buyer);
 
-		assertEquals(NIF, buyer.getNIF());
+	@Test
+	public void success() {
+		Buyer buyer = new Buyer(this.irs, NIF, NAME, ADDRESS);
+
+		assertEquals(NIF, buyer.getNif());
 		assertEquals(NAME, buyer.getName());
 		assertEquals(ADDRESS, buyer.getAddress());
 
-		assertEquals(buyer,this.irs.getTaxPayerByNIF(NIF));
+		assertEquals(buyer, IRS.getIRSInstance().getTaxPayerByNIF(NIF));
 	}
 
 	@Test
 	public void uniqueNIF() {
-		Buyer seller = new Buyer();
-		seller.setIrs(this.irs);
-		seller.setNIF(NIF);
-		seller.setName(NAME);
-		seller.setAddress(ADDRESS);
+		Buyer seller = new Buyer(this.irs, NIF, NAME, ADDRESS);
 
 		try {
-			Buyer buyer = new Buyer();
-			buyer.setIrs(this.irs);
-			buyer.setNIF(NIF);
-			buyer.setName(NAME);
-			buyer.setAddress(ADDRESS);
-			//fail();
+			new Buyer(this.irs, NIF, NAME, ADDRESS);
+			fail();
 		} catch (TaxException ie) {
-			assertEquals(seller, this.irs.getTaxPayerByNIF(NIF));
+			assertEquals(seller, IRS.getIRSInstance().getTaxPayerByNIF(NIF));
 		}
 	}
-	
-	@Test
+
+	@Test(expected = TaxException.class)
 	public void nullNIF() {
-		Buyer buyer = new Buyer();
-		buyer.setIrs(this.irs);
-		buyer.setNIF(null);
-		buyer.setName(NAME);
-		buyer.setAddress(ADDRESS);
+		new Buyer(this.irs, null, NAME, ADDRESS);
 	}
 
-	@Test
+	@Test(expected = TaxException.class)
 	public void emptyNIF() {
-		//new Buyer(this.irs, "", NAME, ADDRESS);
-		Buyer buyer = new Buyer();
-		buyer.setIrs(this.irs);
-		buyer.setNIF("");
-		buyer.setName(NAME);
-		buyer.setAddress(ADDRESS);
+		new Buyer(this.irs, "", NAME, ADDRESS);
 	}
 
-	@Test
+	@Test(expected = TaxException.class)
 	public void nonNineDigitsNIF() {
-		//new Buyer(this.irs, "12345678", NAME, ADDRESS);
-		Buyer buyer = new Buyer();
-		buyer.setIrs(this.irs);
-		buyer.setNIF( "12345678");
-		buyer.setName(NAME);
-		buyer.setAddress(ADDRESS);
+		new Buyer(this.irs, "12345678", NAME, ADDRESS);
 	}
 
-	@Test
+	@Test(expected = TaxException.class)
 	public void nullName() {
-		//new Buyer(this.irs, NIF, null, ADDRESS);
-		Buyer buyer = new Buyer();
-		buyer.setIrs(this.irs);
-		buyer.setNIF(NIF);
-		buyer.setName(null);
-		buyer.setAddress(ADDRESS);
+		new Buyer(this.irs, NIF, null, ADDRESS);
 	}
 
-	@Test
+	@Test(expected = TaxException.class)
 	public void emptyName() {
-		//new Buyer(this.irs, NIF, "", ADDRESS);
-		Buyer buyer = new Buyer();
-		buyer.setIrs(this.irs);
-		buyer.setNIF(NIF);
-		buyer.setName("");
-		buyer.setAddress(ADDRESS);
+		new Buyer(this.irs, NIF, "", ADDRESS);
 	}
 
-	@Test
+	@Test(expected = TaxException.class)
 	public void nullAddress() {
-		//new Buyer(this.irs, NIF, NAME, null);
-		Buyer buyer = new Buyer();
-		buyer.setIrs(this.irs);
-		buyer.setNIF(NIF);
-		buyer.setName(NAME);
-		buyer.setAddress(null);
+		new Buyer(this.irs, NIF, NAME, null);
 	}
 
-	@Test
+	@Test(expected = TaxException.class)
 	public void emptyAddress() {
-		Buyer buyer = new Buyer();
-		buyer.setIrs(this.irs);
-		buyer.setNIF(NIF);
-		buyer.setName(NAME);
-		buyer.setAddress("");
+		new Buyer(this.irs, NIF, NAME, "");
 	}
+
 }

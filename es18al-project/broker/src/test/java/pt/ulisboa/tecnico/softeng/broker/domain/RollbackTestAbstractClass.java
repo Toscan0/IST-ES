@@ -8,7 +8,6 @@ import org.junit.Before;
 
 import pt.ist.fenixframework.FenixFramework;
 import pt.ist.fenixframework.core.WriteOnReadError;
-import pt.ulisboa.tecnico.softeng.car.domain.RentACar;
 
 public abstract class RollbackTestAbstractClass extends BaseTest {
 	@Before

@@ -8,42 +8,31 @@ import java.util.Set;
 import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.FenixFramework;
-import pt.ulisboa.tecnico.softeng.hotel.dataobjects.RoomBookingData;
 import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
+import pt.ulisboa.tecnico.softeng.hotel.services.local.dataobjects.RoomBookingData;
 
 public class Hotel extends Hotel_Base {
 	static final int CODE_SIZE = 7;
-
-	/*private final String nif;
-	private final String iban;
-	private double priceSingle;
-	private double priceDouble;
-*/
-	private final Processor processor = new Processor();
-
-	@Override
-	public int getCounter() {
-		int counter = super.getCounter() + 1;
-		setCounter(counter);
-		return counter;
-	}
 
 	public Hotel(String code, String name, String nif, String iban, double priceSingle, double priceDouble) {
 		checkArguments(code, name, nif, iban, priceSingle, priceDouble);
 
 		setCode(code);
 		setName(name);
-
 		setNif(nif);
 		setIban(iban);
 		setPriceSingle(priceSingle);
 		setPriceDouble(priceDouble);
+
+		setProcessor(new Processor());
 
 		FenixFramework.getDomainRoot().addHotel(this);
 	}
 
 	public void delete() {
 		setRoot(null);
+
+		getProcessor().delete();
 
 		for (Room room : getRoomSet()) {
 			room.delete();
@@ -99,27 +88,6 @@ public class Hotel extends Hotel_Base {
 		}
 		return availableRooms;
 	}
-/*
-	public String getNIF() {
-		return this.nif;
-	}
-
-	public String getIBAN() {
-		return this.iban;
-	}
-*/
-
-	public Processor getProcessor() {
-		return this.processor;
-	}
-
-/*	public double getPriceSingle() {
-		return this.priceSingle;
-	}
-
-	public double getPriceDouble() {
-		return this.priceDouble;
-	}*/
 
 	public double getPrice(Room.Type type) {
 		if (type == null) {
@@ -161,7 +129,7 @@ public class Hotel extends Hotel_Base {
 		return false;
 	}
 
-	private Booking getBooking(String reference) {
+	public Booking getBooking(String reference) {
 		for (Room room : getRoomSet()) {
 			Booking booking = room.getBooking(reference);
 			if (booking != null) {
@@ -199,7 +167,7 @@ public class Hotel extends Hotel_Base {
 			for (Room room : hotel.getRoomSet()) {
 				Booking booking = room.getBooking(reference);
 				if (booking != null) {
-					return new RoomBookingData(room, booking);
+					return new RoomBookingData(booking);
 				}
 			}
 		}
@@ -248,4 +216,15 @@ public class Hotel extends Hotel_Base {
 		return null;
 	}
 
+	public Room getRoomByNumber(String number) {
+		return getRoomSet().stream().filter(r -> r.getNumber().equals(number)).findFirst().orElse(null);
+
+	}
+
+	@Override
+	public int getCounter() {
+		int counter = super.getCounter() + 1;
+		setCounter(counter);
+		return counter;
+	}
 }

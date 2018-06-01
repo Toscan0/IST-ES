@@ -30,7 +30,7 @@ public class ActivityOfferConstructorMethodTest extends RollbackTestAbstractClas
 		assertEquals(this.end, offer.getEnd());
 		assertEquals(1, this.activity.getActivityOfferSet().size());
 		assertEquals(0, offer.getNumberActiveOfBookings());
-		assertEquals(30, offer.getAmount());
+		assertEquals(30, offer.getPrice(), 0);
 	}
 
 	@Test(expected = ActivityException.class)

@@ -1,29 +1,34 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
-import java.util.HashSet;
-import java.util.Set;
-
-//import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
-public abstract class TaxPayer extends TaxPayer_Base{
-	//protected final Set<Invoice> invoices = new HashSet<>();
+public abstract class TaxPayer extends TaxPayer_Base {
+	protected TaxPayer() {
+		// this is a FenixFramework artifact; if not present, compilation fails.
+		// the empty constructor is used by the base class to materialize objects from
+		// the database, and in this case the classes Seller_Base and Buyer_Base, which
+		// extend this class, have the empty constructor, which need to be present in
+		// their superclass
+		super();
+	}
 
-	/*private final String NIF;
-	private final String name;
-	private final String address;*/
-
-	/*public TaxPayer(IRS irs, String NIF, String name, String address) {
+	public TaxPayer(IRS irs, String NIF, String name, String address) {
 		checkArguments(irs, NIF, name, address);
 
-		setNIF(NIF);
+		setNif(NIF);
 		setName(name);
 		setAddress(address);
 
-		//irs.addTaxPayer(this);
-	}*/
+		irs.addTaxPayer(this);
+	}
 
-	private void checkArguments(IRS irs, String NIF, String name, String address) {
+	public void delete() {
+		setIrs(null);
+
+		deleteDomainObject();
+	}
+
+	protected void checkArguments(IRS irs, String NIF, String name, String address) {
 		if (NIF == null || NIF.length() != 9) {
 			throw new TaxException();
 		}
@@ -36,16 +41,11 @@ public abstract class TaxPayer extends TaxPayer_Base{
 			throw new TaxException();
 		}
 
-		if (irs.getTaxPayerSet().contains(NIF)) {
+		if (irs.getTaxPayerByNIF(NIF) != null) {
 			throw new TaxException();
 		}
 
 	}
-	
-	public abstract Invoice getInvoiceByReference(String invoiceReference) ;
 
-
-	public abstract void delete();
-
-
+	public abstract Invoice getInvoiceByReference(String invoiceReference);
 }

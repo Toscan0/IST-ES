@@ -1,0 +1,57 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Invoices</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/3.3.7-1/css/bootstrap.min.css}" />
+<script th:src="@{/webjars/jquery/3.1.1/jquery.min.js}"></script>
+<script th:src="@{/webjars/bootstrap/3.3.7-1/js/bootstrap.min.js}"></script>
+</head>
+<body>
+	<div class="container">
+		<h2>
+			Welcome to Invoices' Manager
+		</h2>
+		<a class="btn btn-default pull-right" th:href="@{/index.html}">Tax home</a>
+		<br/>
+		<h3>Create Invoice</h3>
+		<p class="text-danger" th:text="${error}">Error</p>
+		<form class="form-inline" th:action="@{/invoices}" th:object="${invoice}" method="post">
+			<label>Seller Nif: </label> <input class="form-control" type="text" th:field="*{sellerNIF}"/>
+			
+			
+			<label>Buyer Nif: </label> <input class="form-control" type="text" th:field="*{buyerNIF}"/>
+			
+			
+			<label>ItemType: </label> <input class="form-control" type="text" th:field="*{itemType}"/>
+			
+			<label>value: </label> <input class="form-control" type="number" step="0.01" min="0.01" th:field="*{value}"  />
+			<label>Date: </label> <input class="form-control" type="date" th:field="*{date}" /> 
+			<input class="btn btn-primary" type="submit" value="Submit" />
+		</form>
+		<br/>
+		<h3>List of Invoices</h3>
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>SellerNif</th>
+					<th>BuyerNif</th>
+					<th>ItemType</th>
+					<th>Value</th>
+					<th>Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="invoice: ${invoices}">
+					<td th:text="${invoice.sellerNIF}">Seller Nif</td>
+					<td th:text="${invoice.buyerNIF}">Buyer Nif</td>
+					<td th:text="${invoice.itemType}">ItemType</td>
+					<td th:text="${invoice.value}">Value</td>
+					<td th:text="${invoice.date}">Date</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>

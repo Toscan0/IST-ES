@@ -7,26 +7,25 @@ import pt.ulisboa.tecnico.softeng.hotel.exception.HotelException;
 
 public class Booking extends Booking_Base {
 	private static final String HOUSING_TYPE = "HOUSING";
-	private boolean cancelledInvoice = false;
-	private String cancelledPaymentReference = null;
 
-	public Booking(Room room, LocalDate arrival, LocalDate departure, String buyerNIF, String buyerIban) {
-		checkArguments(room, arrival, departure, buyerNIF, buyerIban);
+	public Booking(Room room, LocalDate arrival, LocalDate departure, String buyerNif, String buyerIban) {
+		checkArguments(room, arrival, departure, buyerNif, buyerIban);
 
 		setReference(room.getHotel().getCode() + Integer.toString(room.getHotel().getCounter()));
 		setArrival(arrival);
 		setDeparture(departure);
-
 		setPrice(room.getHotel().getPrice(room.getType()) * Days.daysBetween(arrival, departure).getDays());
-		setNif(buyerNIF);
-		
-		setProviderNif(room.getHotel().getNif());
+		setBuyerNif(buyerNif);
 		setBuyerIban(buyerIban);
+		setProviderNif(room.getHotel().getNif());
+
 		setRoom(room);
 	}
 
 	public void delete() {
 		setRoom(null);
+
+		setProcessor(null);
 
 		deleteDomainObject();
 	}
@@ -40,12 +39,16 @@ public class Booking extends Booking_Base {
 		if (departure.isBefore(arrival)) {
 			throw new HotelException();
 		}
+
+		if (!room.isFree(room.getType(), arrival, departure)) {
+			throw new HotelException();
+		}
+
 	}
 
 	public static String getType() {
 		return HOUSING_TYPE;
 	}
-
 
 	boolean conflict(LocalDate arrival, LocalDate departure) {
 		if (isCancelled()) {
@@ -74,22 +77,6 @@ public class Booking extends Booking_Base {
 		}
 
 		return false;
-	}
-
-	public boolean isCancelledInvoice() {
-		return this.cancelledInvoice;
-	}
-
-	public void setCancelledInvoice(boolean cancelledInvoice) {
-		this.cancelledInvoice = cancelledInvoice;
-	}
-
-	public String getCancelledPaymentReference() {
-		return this.cancelledPaymentReference;
-	}
-
-	public void setCancelledPaymentReference(String cancelledPaymentReference) {
-		this.cancelledPaymentReference = cancelledPaymentReference;
 	}
 
 	public String cancel() {

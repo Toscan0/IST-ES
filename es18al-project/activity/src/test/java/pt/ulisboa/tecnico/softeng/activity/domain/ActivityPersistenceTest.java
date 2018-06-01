@@ -1,6 +1,7 @@
 package pt.ulisboa.tecnico.softeng.activity.domain;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -25,6 +26,7 @@ public class ActivityPersistenceTest {
 	private static final String BUYER_IBAN = "IBAN2";
 	private static final String BUYER_NIF = "NIF2";
 	private static final int CAPACITY = 25;
+	private static final double AMOUNT = 30.0;
 
 	private final LocalDate begin = new LocalDate(2017, 04, 01);
 	private final LocalDate end = new LocalDate(2017, 04, 15);
@@ -41,9 +43,9 @@ public class ActivityPersistenceTest {
 
 		Activity activity = new Activity(activityProvider, ACTIVITY_NAME, 18, 65, CAPACITY);
 
-		ActivityOffer activityOffer = new ActivityOffer(activity, this.begin, this.end, 30);
+		new ActivityOffer(activity, this.begin, this.end, AMOUNT);
 
-		new Booking(activityProvider, activityOffer, BUYER_NIF, BUYER_IBAN);
+		ActivityProvider.reserveActivity(this.begin, this.end, 54, BUYER_NIF, BUYER_IBAN);
 	}
 
 	@Atomic(mode = TxMode.READ)
@@ -56,6 +58,11 @@ public class ActivityPersistenceTest {
 		assertEquals(PROVIDER_CODE, provider.getCode());
 		assertEquals(PROVIDER_NAME, provider.getName());
 		assertEquals(1, provider.getActivitySet().size());
+		assertEquals(NIF, provider.getNif());
+		assertEquals(IBAN, provider.getIban());
+		Processor processor = provider.getProcessor();
+		assertNotNull(processor);
+		assertEquals(0, processor.getBookingSet().size());
 
 		List<Activity> activities = new ArrayList<>(provider.getActivitySet());
 		Activity activity = activities.get(0);
@@ -74,6 +81,7 @@ public class ActivityPersistenceTest {
 		assertEquals(this.end, offer.getEnd());
 		assertEquals(CAPACITY, offer.getCapacity());
 		assertEquals(1, offer.getBookingSet().size());
+		assertEquals(AMOUNT, offer.getPrice(), 0);
 
 		List<Booking> bookings = new ArrayList<>(offer.getBookingSet());
 		Booking booking = bookings.get(0);
@@ -81,6 +89,17 @@ public class ActivityPersistenceTest {
 		assertNotNull(booking.getReference());
 		assertNull(booking.getCancel());
 		assertNull(booking.getCancellationDate());
+		assertNull(booking.getPaymentReference());
+		assertNull(booking.getInvoiceReference());
+		assertFalse(booking.getCancelledInvoice());
+		assertNull(booking.getCancelledPaymentReference());
+		assertEquals("SPORT", booking.getType());
+		assertEquals(BUYER_NIF, booking.getBuyerNif());
+		assertEquals(BUYER_IBAN, booking.getIban());
+		assertEquals(NIF, booking.getProviderNif());
+		assertEquals(AMOUNT, booking.getAmount(), 0.0d);
+		assertEquals(this.begin, booking.getDate());
+		assertNull(booking.getProcessor());
 	}
 
 	@After

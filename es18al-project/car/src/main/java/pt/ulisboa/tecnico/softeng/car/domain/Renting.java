@@ -4,29 +4,32 @@ import org.joda.time.LocalDate;
 
 import pt.ulisboa.tecnico.softeng.car.exception.CarException;
 
-public class Renting extends Renting_Base{
+public class Renting extends Renting_Base {
 	private static String drivingLicenseFormat = "^[a-zA-Z]+\\d+$";
 	private static final String type = "RENTAL";
-
-
 
 	public Renting(String drivingLicense, LocalDate begin, LocalDate end, Vehicle vehicle, String buyerNIF,
 			String buyerIBAN) {
 		checkArguments(drivingLicense, begin, end, vehicle);
-		setReference(Integer.toString(vehicle.getRentACar().getNextCounter()));
+
+		setKilometers(-1);
+		setCancelledInvoice(false);
+
+		setReference(Integer.toString(vehicle.getRentACar().getCounter()));
 		setDrivingLicense(drivingLicense);
 		setBegin(begin);
 		setEnd(end);
-		setVehicle(vehicle);
-		setClientNIF(buyerNIF);
-		setClientIBAN(buyerIBAN);
+		setClientNif(buyerNIF);
+		setClientIban(buyerIBAN);
 		setPrice(vehicle.getPrice() * (end.getDayOfYear() - begin.getDayOfYear()));
-		setKilometers(-1);
-		setCancelledInvoice(false);
-		setCancelledPaymentReference(null);
-		
-		vehicle.addRenting(this);
-	
+
+		setVehicle(vehicle);
+	}
+
+	public void delete() {
+		setVehicle(null);
+		setProcessor(null);
+		deleteDomainObject();
 	}
 
 	private void checkArguments(String drivingLicense, LocalDate begin, LocalDate end, Vehicle vehicle) {
@@ -36,7 +39,6 @@ public class Renting extends Renting_Base{
 		}
 	}
 
-	
 	public boolean isCancelled() {
 		return getCancellationReference() != null && getCancellationDate() != null;
 	}
@@ -70,34 +72,24 @@ public class Renting extends Renting_Base{
 	 */
 	public void checkout(int kilometers) {
 		setKilometers(kilometers);
-		getVehicle().addKilometers(getKilometers());
+		getVehicle().addKilometers(kilometers);
 	}
 
 	public String cancel() {
-		setCancellationReference( getReference() + "CANCEL");
+		setCancellationReference(getReference() + "CANCEL");
 		setCancellationDate(LocalDate.now());
 
 		this.getVehicle().getRentACar().getProcessor().submitRenting(this);
 
 		return getCancellationReference();
 	}
-	
 
 	public String getType() {
 		return this.type;
 	}
-	
+
 	public boolean isCancelledInvoice() {
 		return getCancelledInvoice();
 	}
 
-	public String getCancellation() {
-		return getCancel();
-	}
-	
-	
-	public void delete() {
-		setVehicle(null);
-		deleteDomainObject();
-	}
 }

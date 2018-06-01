@@ -1,124 +1,80 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import org.joda.time.LocalDate;
 import org.junit.After;
 import org.junit.Test;
 
 import pt.ist.fenixframework.Atomic;
-import pt.ist.fenixframework.Atomic.TxMode;
 import pt.ist.fenixframework.FenixFramework;
 
 public class TaxPersistenceTest {
-	
-	private static final String BUYER_NIF = "123456789";
-	private static final String BUYER_NAME = "José Vendido";
-	private static final String BUYER_ADDRESS = "Somewhere";
-	
-	private static final String SELLER_NIF = "987654321";
-	private static final String SELLER_NAME = "Manuel Comprado";
-	private static final String SELLER_ADDRESS = "Anywhere";
-	
-	private static final String ITEM = "FOOD";
-	private static final int VALUE = 10;
-	private static final int TAX = 23;
-	
+	private static final String SELLER_NIF = "123456789";
+	private static final String BUYER_NIF = "987654321";
+	private static final String FOOD = "FOOD";
+	private static final int VALUE = 16;
 	private final LocalDate date = new LocalDate(2018, 02, 13);
-	
-	private IRS irs;
-	
+
 	@Test
 	public void success() {
 		atomicProcess();
 		atomicAssert();
 	}
 
-	@Atomic(mode = TxMode.WRITE)
+	@Atomic(mode = Atomic.TxMode.WRITE)
 	public void atomicProcess() {
-		irs = new IRS();
-		
-		Buyer buyer = new Buyer();
-		buyer.setIrs(irs);
-		buyer.setNIF(BUYER_NIF);
-		buyer.setName(BUYER_NAME);
-		buyer.setAddress( BUYER_ADDRESS);
-		
-		Seller seller = new Seller();
-		seller.setIrs(irs);
-		seller.setNIF(SELLER_NIF);
-		seller.setName(SELLER_NAME);
-		seller.setAddress(SELLER_ADDRESS);
+		IRS irs = IRS.getIRSInstance();
+		Seller seller = new Seller(irs, SELLER_NIF, "José Vendido", "Somewhere");
+		Buyer buyer = new Buyer(irs, BUYER_NIF, "Manuel Comprado", "Anywhere");
+		ItemType it = new ItemType(irs, FOOD, VALUE);
 
-		irs.addTaxPayer(buyer);
-		irs.addTaxPayer(seller);
-		
-		ItemType itemType = new ItemType(irs, ITEM, TAX);
-		irs.addItemType(itemType);
-		
-		Invoice invoice = new Invoice(VALUE, this.date, itemType, seller, buyer);
-		
-		seller.addInvoice(invoice);
-		buyer.addInvoice(invoice);
+		new Invoice(VALUE, this.date, it, seller, buyer);
 	}
 
-	@Atomic(mode = TxMode.READ)
+	@Atomic(mode = Atomic.TxMode.READ)
 	public void atomicAssert() {
-		
-		//IRS verification
+		IRS irs = IRS.getIRSInstance();
+
 		assertEquals(2, irs.getTaxPayerSet().size());
+
+		TaxPayer taxPayer1 = new ArrayList<>(irs.getTaxPayerSet()).get(0);
+		if (taxPayer1 instanceof Seller) {
+			assertEquals(SELLER_NIF, taxPayer1.getNif());
+		} else {
+			assertEquals(BUYER_NIF, taxPayer1.getNif());
+		}
+
+		TaxPayer taxPayer2 = new ArrayList<>(irs.getTaxPayerSet()).get(1);
+		if (taxPayer2 instanceof Seller) {
+			assertEquals(SELLER_NIF, taxPayer2.getNif());
+		} else {
+			assertEquals(BUYER_NIF, taxPayer2.getNif());
+		}
+
 		assertEquals(1, irs.getItemTypeSet().size());
-		
-		List<TaxPayer> taxPayers = new ArrayList<>(irs.getTaxPayerSet());
-		
-		TaxPayer buyer = (Buyer) taxPayers.get(0);
-		assertEquals(BUYER_NIF, buyer.getNIF());
-		assertEquals(BUYER_NAME, buyer.getName());
-		assertEquals(BUYER_ADDRESS, buyer.getAddress());
+		ItemType itemType = new ArrayList<>(irs.getItemTypeSet()).get(0);
+		assertEquals(VALUE, itemType.getTax());
+		assertEquals(FOOD, itemType.getName());
 
-		TaxPayer seller = (Seller) taxPayers.get(1);
-		assertEquals(SELLER_NIF, seller.getNIF());
-		assertEquals(SELLER_NAME, seller.getName());
-		assertEquals(SELLER_ADDRESS, seller.getAddress());
-		
-
-		List<ItemType> itemTypes = new ArrayList<>(irs.getItemTypeSet());
-		ItemType item = itemTypes.get(0);
-		assertEquals(ITEM, item.getName());
-		assertEquals(TAX, item.getTax());
-		/*
-		 List<Invoice> sellerInvoices = new ArrayList<>(seller.getInvoiceSet());
-		Invoice sellerInvoice = sellerInvoices.get(0);
-		List<Invoice> buyerInvoices = new ArrayList<>(buyer.getInvoiceSet());
-		Invoice buyerInvoice = buyerInvoices.get(0);
-		
-		assertEquals(VALUE, buyerInvoice.getValue(), 0.0f);
-		assertEquals(date, buyerInvoice.getDate());
-		assertEquals(item, buyerInvoice.getItemType());
-		assertEquals(seller, buyerInvoice.getSeller());
-		assertEquals(buyer, buyerInvoice.getBuyer());
-		
-		assertEquals(VALUE, sellerInvoice.getValue(), 0.0f);
-		assertEquals(date, sellerInvoice.getDate());
-		assertEquals(item, sellerInvoice.getItemType());
-		assertEquals(seller, sellerInvoice.getSeller());
-		assertEquals(buyer, sellerInvoice.getBuyer());*/
+		assertEquals(1, irs.getInvoiceSet().size());
+		Invoice invoice = new ArrayList<>(irs.getInvoiceSet()).get(0);
+		assertEquals(VALUE, invoice.getValue(), 0);
+		assertNotNull(invoice.getReference());
+		assertEquals(date, invoice.getDate());
+		assertEquals(BUYER_NIF, invoice.getBuyer().getNif());
+		assertEquals(SELLER_NIF, invoice.getSeller().getNif());
+		assertEquals(itemType, invoice.getItemType());
+		assertFalse(invoice.getCancelled());
 	}
 
 	@After
-	@Atomic(mode = TxMode.WRITE)
+	@Atomic(mode = Atomic.TxMode.WRITE)
 	public void tearDown() {
-		IRS irs = FenixFramework.getDomainRoot().getIrs();
-		irs.delete();		
+		FenixFramework.getDomainRoot().getIrs().delete();
 	}
-	
-	
-	
-	
-	
-	
-	
 }

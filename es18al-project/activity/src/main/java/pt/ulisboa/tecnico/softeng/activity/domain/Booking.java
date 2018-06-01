@@ -5,26 +5,20 @@ import org.joda.time.LocalDate;
 import pt.ulisboa.tecnico.softeng.activity.exception.ActivityException;
 
 public class Booking extends Booking_Base {
-	private static int counter = 0;
-
 	private static final String SPORT_TYPE = "SPORT";
-	
-
-	private boolean cancelledInvoice = false;
-	private String cancelledPaymentReference = null;
 
 	public Booking(ActivityProvider provider, ActivityOffer offer, String buyerNif, String buyerIban) {
 		checkArguments(provider, offer, buyerNif, buyerIban);
 
-		setReference(offer.getActivity().getActivityProvider().getCode() + Integer.toString(++Booking.counter));
-
+		setReference(offer.getActivity().getActivityProvider().getCode() + Integer.toString(provider.getCounter()));
 		setActivityOffer(offer);
-
 		setProviderNif(provider.getNif());
-		setNif(buyerNif);
+		setBuyerNif(buyerNif);
 		setIban(buyerIban);
-		setAmount(offer.getAmount());
+		setAmount(offer.getPrice());
 		setDate(offer.getBegin());
+		setType(SPORT_TYPE);
+		setCancelledInvoice(false);
 
 		offer.addBooking(this);
 	}
@@ -43,29 +37,9 @@ public class Booking extends Booking_Base {
 	public void delete() {
 		setActivityOffer(null);
 
+		setProcessor(null);
+
 		deleteDomainObject();
-	}
-
-	public String getType() {
-		return SPORT_TYPE;
-	}
-
-
-
-	public boolean isCancelledInvoice() {
-		return this.cancelledInvoice;
-	}
-
-	public void setCancelledInvoice(boolean cancelledInvoice) {
-		this.cancelledInvoice = cancelledInvoice;
-	}
-
-	public String getCancelledPaymentReference() {
-		return this.cancelledPaymentReference;
-	}
-
-	public void setCancelledPaymentReference(String cancelledPaymentReference) {
-		this.cancelledPaymentReference = cancelledPaymentReference;
 	}
 
 	public String cancel() {

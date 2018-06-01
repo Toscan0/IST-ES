@@ -7,7 +7,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
 public class BuyerToReturnTest extends RollbackTestAbstractClass {
@@ -21,24 +20,12 @@ public class BuyerToReturnTest extends RollbackTestAbstractClass {
 	private Buyer buyer;
 	private ItemType itemType;
 
-	IRS irs;
-
 	@Override
 	public void populate4Test() {
-		this.irs = new IRS();
-		
-		this.buyer = new Buyer();
-		this.buyer.setIrs(this.irs);
-		this.buyer.setAddress( "Anywhere");
-		this.buyer.setName("Manuel Comprado");
-		this.buyer.setNIF(BUYER_NIF);
-		
-		this.seller = new Seller();
-		this.seller.setIrs(this.irs);
-		this.seller.setAddress("Somewhere");
-		this.seller.setName("José Vendido");
-		this.seller.setNIF(SELLER_NIF);
-		this.itemType = new ItemType(this.irs, FOOD, TAX);
+		IRS irs = IRS.getIRSInstance();
+		this.seller = new Seller(irs, SELLER_NIF, "José Vendido", "Somewhere");
+		this.buyer = new Buyer(irs, BUYER_NIF, "Manuel Comprado", "Anywhere");
+		this.itemType = new ItemType(irs, FOOD, TAX);
 	}
 
 	@Test
@@ -97,10 +84,4 @@ public class BuyerToReturnTest extends RollbackTestAbstractClass {
 
 		assertEquals(0.75f, value, 0.00f);
 	}
-
-	/*@After
-	public void tearDown() {
-		FenixFramework.getDomainRoot().getIrs().clearAll();
-	}*/
-
 }

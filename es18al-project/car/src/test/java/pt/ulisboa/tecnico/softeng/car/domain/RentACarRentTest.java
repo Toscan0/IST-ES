@@ -7,15 +7,16 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.car.exception.CarException;
-import pt.ulisboa.tecnico.softeng.car.interfaces.BankInterface;
-import pt.ulisboa.tecnico.softeng.car.interfaces.TaxInterface;
+import pt.ulisboa.tecnico.softeng.car.services.remote.BankInterface;
+import pt.ulisboa.tecnico.softeng.car.services.remote.TaxInterface;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(JMockit.class)
-public class RentACarRentTest  extends RollbackTestAbstractClass{
+public class RentACarRentTest extends RollbackTestAbstractClass {
 
 	private static final String PLATE_CAR = "22-33-HZ";
 	private static final String RENT_A_CAR_NAME = "Eartz";
@@ -33,8 +34,8 @@ public class RentACarRentTest  extends RollbackTestAbstractClass{
 	@Mocked
 	private TaxInterface taxInterface;
 
-	@Override
-	public void populate4Test() {
+    @Override
+    public void populate4Test() {
 		rentACar = new RentACar(RENT_A_CAR_NAME, NIF, IBAN);
 		car = new Car(PLATE_CAR, 10, 10, rentACar);
 	}
@@ -54,13 +55,12 @@ public class RentACarRentTest  extends RollbackTestAbstractClass{
 
 	@Test(expected = CarException.class)
 	public void noRentACars() {
-		rentACar.delete();
-		RentACar.rent(Car.class, DRIVING_LICENSE, NIF, IBAN_BUYER, BEGIN, END);
+        rentACar.delete();
+        RentACar.rent(Car.class, DRIVING_LICENSE, NIF, IBAN_BUYER, BEGIN, END);
 	}
 
 	@Test(expected = CarException.class)
 	public void noMotorcycles() {
 		RentACar.rent(Motorcycle.class, DRIVING_LICENSE, NIF, IBAN_BUYER, BEGIN, END);
 	}
-
 }

@@ -11,11 +11,11 @@ import org.junit.Test;
 
 import org.junit.runner.RunWith;
 import pt.ulisboa.tecnico.softeng.car.exception.CarException;
-import pt.ulisboa.tecnico.softeng.car.interfaces.BankInterface;
-import pt.ulisboa.tecnico.softeng.car.interfaces.TaxInterface;
+import pt.ulisboa.tecnico.softeng.car.services.remote.BankInterface;
+import pt.ulisboa.tecnico.softeng.car.services.remote.TaxInterface;
 
 @RunWith(JMockit.class)
-public class RentingCheckoutTest  extends RollbackTestAbstractClass {
+public class RentingCheckoutTest extends RollbackTestAbstractClass {
 	private static final String NAME1 = "eartz";
 	private static final String PLATE_CAR1 = "aa-00-11";
 	private static final String DRIVING_LICENSE = "br123";
@@ -33,7 +33,7 @@ public class RentingCheckoutTest  extends RollbackTestAbstractClass {
 
 
     @Override
-	public void populate4Test() {
+    public void populate4Test() {
 		RentACar rentACar1 = new RentACar(NAME1, NIF, IBAN);
 		this.car = new Car(PLATE_CAR1, 10, 10, rentACar1);
 	}

@@ -1,40 +1,37 @@
 package pt.ulisboa.tecnico.softeng.tax.domain;
 
-import pt.ist.fenixframework.FenixFramework;
 import org.joda.time.LocalDate;
 
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
-public class Invoice extends Invoice_Base{
-	private static int counter = 0;
+public class Invoice extends Invoice_Base {
 
-	//private final String reference;
-	//private final double value;
-	//private final double iva;
-	//private final LocalDate date;
-	//private final ItemType itemType;
-	private final Seller seller;
-	private final Buyer buyer;
-	private boolean cancelled = false;
-
-	Invoice(double value, LocalDate date, ItemType itemType, Seller seller, Buyer buyer) {	
+	Invoice(double value, LocalDate date, ItemType itemType, Seller seller, Buyer buyer) {
+		System.out.println("vou checkar os argumentos");
 		checkArguments(value, date, itemType, seller, buyer);
-
-		//this.reference = Integer.toString(++Invoice.counter);
-		setReference(Integer.toString(++Invoice.counter));
-		//this.value = value;
+		System.out.println("checkei argumentos, tudo ok");
+		setReference(Integer.toString(seller.getIrs().getCounter()));
 		setValue(value);
-		//this.date = date;
 		setDate(date);
-		//this.itemType = itemType;
+		setCancelled(false);
 		setItemType(itemType);
-		this.seller = seller;
-		this.buyer = buyer;
-		//this.iva = value * itemType.getTax() / 100;
-		setIVA(value * itemType.getTax() / 100);
-		
-		seller.addInvoice(this);
-		buyer.addInvoice(this);
+		setSeller(seller);
+		setBuyer(buyer);
+
+		setIva(value * itemType.getTax() / 100);
+
+		getSeller().addInvoice(this);
+		getBuyer().addInvoice(this);
+
+		setIrs(getSeller().getIrs());
+	}
+
+	public void delete() {
+		setIrs(null);
+		setSeller(null);
+		setBuyer(null);
+		setItemType(null);
+		deleteDomainObject();
 	}
 
 	private void checkArguments(double value, LocalDate date, ItemType itemType, Seller seller, Buyer buyer) {
@@ -58,52 +55,13 @@ public class Invoice extends Invoice_Base{
 			throw new TaxException();
 		}
 	}
-/*
-	public String getReference() {
-		return this.reference;
-	}
-
-	public double getIva() {
-		return this.iva;
-	}
-
-	public double getValue() {
-		return this.value;
-	}
-
-	public LocalDate getDate() {
-		return this.date;
-	}
-
-	public ItemType getItemType() {
-		return this.itemType;
-	}*/
-
-	public Seller getSeller() {
-		return this.seller;
-	}
-
-	public Buyer getBuyer() {
-		return this.buyer;
-	}
 
 	public void cancel() {
-		this.cancelled = true;
+		setCancelled(true);
 	}
 
 	public boolean isCancelled() {
-		return this.cancelled;
-	}
-	
-	
-	public void delete() {
-		setItemType(null);
-		setTaxPayerBuyer(null);
-		setTaxPayerSeller(null);
-		
-		
-		
-		deleteDomainObject();
+		return getCancelled();
 	}
 
 }

@@ -6,38 +6,29 @@ import java.util.List;
 import org.joda.time.LocalDate;
 
 import pt.ist.fenixframework.FenixFramework;
-import pt.ulisboa.tecnico.softeng.activity.dataobjects.ActivityReservationData;
 import pt.ulisboa.tecnico.softeng.activity.exception.ActivityException;
+import pt.ulisboa.tecnico.softeng.activity.services.local.dataobjects.ActivityReservationData;
 
 public class ActivityProvider extends ActivityProvider_Base {
 	static final int CODE_SIZE = 6;
-
-	/*private final String nif;
-	private final String iban;*/
-
-	private final Processor processor = new Processor();
-
-	@Override
-	public int getCounter() {
-		int counter = super.getCounter() + 1;
-		setCounter(counter);
-		return counter;
-	}
 
 	public ActivityProvider(String code, String name, String nif, String iban) {
 		checkArguments(code, name, nif, iban);
 
 		setCode(code);
 		setName(name);
-
 		setNif(nif);
 		setIban(iban);
+
+		setProcessor(new Processor());
 
 		FenixFramework.getDomainRoot().addActivityProvider(this);
 	}
 
 	public void delete() {
 		setRoot(null);
+
+		getProcessor().delete();
 
 		for (Activity activity : getActivitySet()) {
 			activity.delete();
@@ -69,11 +60,6 @@ public class ActivityProvider extends ActivityProvider_Base {
 		}
 	}
 
-
-	public Processor getProcessor() {
-		return this.processor;
-	}
-
 	public List<ActivityOffer> findOffer(LocalDate begin, LocalDate end, int age) {
 		List<ActivityOffer> result = new ArrayList<>();
 		for (Activity activity : getActivitySet()) {
@@ -82,7 +68,7 @@ public class ActivityProvider extends ActivityProvider_Base {
 		return result;
 	}
 
-	private Booking getBooking(String reference) {
+	public Booking getBooking(String reference) {
 		for (Activity activity : getActivitySet()) {
 			Booking booking = activity.getBooking(reference);
 			if (booking != null) {
@@ -135,6 +121,13 @@ public class ActivityProvider extends ActivityProvider_Base {
 			}
 		}
 		throw new ActivityException();
+	}
+
+	@Override
+	public int getCounter() {
+		int counter = super.getCounter() + 1;
+		setCounter(counter);
+		return counter;
 	}
 
 }

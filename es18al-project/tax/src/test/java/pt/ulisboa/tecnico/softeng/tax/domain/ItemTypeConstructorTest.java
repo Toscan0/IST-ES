@@ -8,29 +8,28 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
-public class ItemTypeConstructorTest   extends RollbackTestAbstractClass  {
+public class ItemTypeConstructorTest extends RollbackTestAbstractClass {
 	private static final String CAR = "CAR";
 	private static final int TAX = 23;
 
-	private IRS irs;
-	
+	IRS irs;
+
 	@Override
 	public void populate4Test() {
-		this.irs = new IRS();
+		this.irs = IRS.getIRSInstance();
 	}
-	
+
 	@Test
 	public void success() {
-		IRS irs = FenixFramework.getDomainRoot().getIrs();
+		IRS irs = IRS.getIRSInstance();
 
 		ItemType itemType = new ItemType(irs, CAR, TAX);
 
 		assertEquals(CAR, itemType.getName());
 		assertEquals(TAX, itemType.getTax());
-		assertNotNull(this.irs.getItemTypeByName(CAR));
+		assertNotNull(IRS.getIRSInstance().getItemTypeByName(CAR));
 
 		assertEquals(itemType, irs.getItemTypeByName(CAR));
 	}
@@ -43,7 +42,7 @@ public class ItemTypeConstructorTest   extends RollbackTestAbstractClass  {
 			new ItemType(this.irs, CAR, TAX);
 			fail();
 		} catch (TaxException te) {
-			assertEquals(itemType, this.irs.getItemTypeByName(CAR));
+			assertEquals(itemType, IRS.getIRSInstance().getItemTypeByName(CAR));
 		}
 	}
 

@@ -1,30 +1,33 @@
 package pt.ulisboa.tecnico.softeng.car.domain;
 
-class RentACar{
-	String name;
-	String code;
-	String nif;
-	String iban;
-
+class RentACar {
+    String code;
+    String name;
+    String nif;
+    String iban;
+    int counter;
 }
 
-relation DomainRootHasRentACar {
+relation DomainRootHasRentACarApplication {
 	.pt.ist.fenixframework.DomainRoot playsRole root {
 		multiplicity 1..1;
 	}
-	RentACar playsRole rentacar {
+	RentACar playsRole rentACar {
 		multiplicity 0..*;
 	}
 }
 
-class Vehicle{
-	String plate;
-	int kilometers;
-	double price;
+class Vehicle {
+    String plate;
+    int kilometers;
+    double price;
 }
 
-relation RentACarHasVehicle {
-	RentACar playsRole rentacar {
+class Car extends Vehicle;
+class Motorcycle extends Vehicle;
+
+relation RentACarHasVehicles {
+	RentACar playsRole rentACar {
 		multiplicity 1..1;
 	}
 	Vehicle playsRole vehicle {
@@ -32,46 +35,49 @@ relation RentACarHasVehicle {
 	}
 }
 
-class Car extends Vehicle;
-class Motorcycle extends Vehicle;
-
-class Plates{
-	String plate;
-}
-
-relation VehicleHasPlates{
-	Vehicle playsRole vehicle{
-		multiplicity 1..1;
-	}
-	Plates playsRole plates{
-		multiplicity 0..*;
-	}
-}
-
-
-class Renting{
+class Renting {
 	String reference;
+	String cancellationReference;
 	String drivingLicense;
 	LocalDate begin;
 	LocalDate end;
-	String clientNIF;
-	String clientIBAN;
-	double price;
-	String cancellationReference;
 	int kilometers;
+	String clientNif;
+	String clientIban;
+	double price;
 	String paymentReference;
 	String invoiceReference;
-	String cancel;
+    String cancel;
 	LocalDate cancellationDate;
 	boolean cancelledInvoice;
 	String cancelledPaymentReference;
 }
 
-relation VehicleHasRenting{
-	Vehicle playsRole vehicle{
+relation VehicleHasRentings{
+	Vehicle playsRole vehicle {
 		multiplicity 1..1;
 	}
-	Renting playsRole renting{
+	Renting playsRole renting {
+		multiplicity 0..*;
+	}
+}
+
+class Processor;
+
+relation RentACarHasProcessor {
+	RentACar playsRole rentACar {
+		multiplicity 1..1;
+	}
+	Processor playsRole processor {
+		multiplicity 1..1;
+	}
+}
+
+relation ProcessorManagesRentings {
+	Processor playsRole processor {
+		multiplicity 0..1;
+	}
+	Renting playsRole renting {
 		multiplicity 0..*;
 	}
 }

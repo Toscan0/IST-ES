@@ -7,7 +7,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import pt.ist.fenixframework.FenixFramework;
 import pt.ulisboa.tecnico.softeng.tax.exception.TaxException;
 
 public class IRSCancelInvoiceMethodTest extends RollbackTestAbstractClass {
@@ -20,21 +19,12 @@ public class IRSCancelInvoiceMethodTest extends RollbackTestAbstractClass {
 	private IRS irs;
 	private String reference;
 	Invoice invoice;
-	
+
 	@Override
 	public void populate4Test() {
-		this.irs = new IRS();
-		Buyer buyer = new Buyer();
-		buyer.setIrs(this.irs);
-		buyer.setAddress( "Anywhere");
-		buyer.setName("Manuel Comprado");
-		buyer.setNIF(BUYER_NIF);
-		
-		Seller seller = new Seller();
-		seller.setIrs(this.irs);
-		seller.setAddress("Somewhere");
-		seller.setName("José Vendido");
-		seller.setNIF(SELLER_NIF);
+		this.irs = IRS.getIRSInstance();
+		Seller seller = new Seller(this.irs, SELLER_NIF, "José Vendido", "Somewhere");
+		Buyer buyer = new Buyer(this.irs, BUYER_NIF, "Manuel Comprado", "Anywhere");
 		ItemType itemType = new ItemType(this.irs, FOOD, VALUE);
 		this.invoice = new Invoice(30.0, this.date, itemType, seller, buyer);
 		this.reference = this.invoice.getReference();
